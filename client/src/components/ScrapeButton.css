@@ -1,0 +1,7 @@
+.carefulButton {
+  background-color: rgb(139, 72, 0);
+}
+
+.carefulButton:hover {
+  background-color: rgb(255, 166, 0);
+}

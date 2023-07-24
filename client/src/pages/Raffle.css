@@ -1,0 +1,17 @@
+.Raffle {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.Raffle-left {
+  flex: 0.6;
+  min-width: 740px;
+  display: flex;
+  flex-direction: column;
+}
+
+.Raffle-right {
+  flex: 1;
+  display: flex;
+}

@@ -1,0 +1,64 @@
+nav {
+  background-color: #333;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+nav ul {
+  list-style-type: none;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+
+nav li {
+  margin-right: 10px;
+}
+
+nav a {
+  color: #fff;
+  text-decoration: none;
+  padding: 5px 10px;
+  font-weight: bold; /* Added property for bold text */
+}
+
+nav a:hover {
+  background-color: #555;
+}
+
+nav button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 5px 10px;
+  color: #fff;
+  font-weight: bold;
+}
+
+nav button:hover {
+  background-color: #555;
+}
+
+.linkSpan {
+  cursor: url(../assets/images/clipboard-solid.svg), auto;
+  color: #fff;
+  font-weight: bold;
+}
+
+.linkSpan :hover {
+  background-color: #515a6b;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  text-align: center;
+  padding: 1px;
+  padding-right: 19px;
+  font-size: 14px;
+  font-weight: 0;
+}

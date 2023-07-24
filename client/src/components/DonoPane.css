@@ -1,0 +1,29 @@
+.dono-pane {
+  display: flex;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 10px;
+  max-width: 400px;
+  min-width: 400px;
+}
+
+.dono-pane-left {
+  flex: 0.3;
+  padding: 10px;
+}
+
+.dono-pane-right {
+  flex: 1;
+  background-color: #262626;
+  padding: 10px;
+  border-left: 1px solid #ccc;
+}
+
+.message {
+  background-color: #2d2d2d;
+  padding: 5px;
+  border-radius: 5px;
+  flex: 1;
+  word-break: break-all;
+}

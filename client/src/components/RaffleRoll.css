@@ -1,0 +1,19 @@
+.warningButton {
+  background-color: darkred;
+}
+
+.warningButton:hover {
+  background-color: red;
+}
+
+.displayRaffleResult {
+  background-color: #555;
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  font-weight: bold;
+  padding: 12px 24px;
+  font-size: 40px;
+  width: auto;
+  height: auto;
+}

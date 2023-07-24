@@ -1,0 +1,29 @@
+.RP-Header {
+  display: inline-flex;
+}
+
+.RP {
+  display: block;
+}
+
+.RP-Body {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.bounce-span {
+  display: inline-block;
+  animation: bounce 3s infinite;
+  z-index: -1;
+  position: relative;
+}
+
+@keyframes bounce {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: scale(1.5) translateY(+30px);
+    rotate: 10deg;
+  }
+}
