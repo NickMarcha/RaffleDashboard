@@ -56,7 +56,7 @@ app.use((req, res, next) => {
 const corsOptions = {
   origin: [
     "http://localhost/",
-    "http://52.23.242.199/",
+    "http://44.204.228.102/",
     "https://raffledashboard.nickmarcha.com/",
   ],
 };
