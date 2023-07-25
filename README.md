@@ -9,6 +9,11 @@ This is repo to manage a wepapp consisting of
 The webapp is currently hosted on a ec2-aws instance with nginx configured with Cloudflare SSL sertificate.
 The nginx will proxy any requests needed to the backend api server when needed, any request with root path `/api`
 
+Datbase is here [here](https://docs.google.com/spreadsheets/d/1IaLXgyMT9uX4uqVKvFdThEAT4QsIvRpCXSc2CephOWU) (You need acess.)
+
+Up to date export of raw data is available [here](https://docs.google.com/spreadsheets/d/1ueMA5oPhetFo6zYaWveGBL984NJahuB4jw-iZC8mHVI/)
+
+Up to date export of Donation statistics found [here](https://docs.google.com/spreadsheets/d/e/2PACX-1vT02jloyxs18l0kZa3v216iIpRVfIO339nwWXAgPnFVlipoTTVo3x6XkN74NFMhwJok2IC5ccb2749v/pubhtml?gid=1688478255&single=true)
 ## My Todo list
 
 - [ ] JWT Authentication
