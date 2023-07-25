@@ -6,6 +6,7 @@ This is repo to manage a wepapp consisting of
 - Node Expess JWT Authenticated Backend
   - Database in google sheets
   - Routinly scrapes [Charity Donationlist](https://www.againstmalaria.com/Fundraiser.aspx?FundraiserID=8960) for new entries.
+  - Simple auth free api intended for use in OBS overlays
 
 The webapp is currently hosted on a ec2-aws instance with nginx configured with Cloudflare SSL sertificate.
 The nginx will proxy any requests needed to the backend api server when needed, any request with root path `/api`
