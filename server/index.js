@@ -54,11 +54,7 @@ app.use((req, res, next) => {
   next();
 });
 const corsOptions = {
-  origin: [
-    "http://localhost/",
-    "http://44.204.228.102/",
-    "https://raffledashboard.nickmarcha.com/",
-  ],
+  origin: ["http://localhost/", process.env.HOST_URL, process.env.DOMAIN_NAME],
 };
 app.use(cors(corsOptions));
 
