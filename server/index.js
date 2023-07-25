@@ -104,7 +104,7 @@ app.post("/api/login", limiter, async (request, response) => {
           accessCode: reqaccessCode,
           alias: result.alias,
         },
-        "RANDOM-TOKEN",
+        process.env.JWT_SECRET,
         { expiresIn: "24h" }
       );
 
