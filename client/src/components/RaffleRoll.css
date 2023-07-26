@@ -11,9 +11,10 @@
   color: #fff;
   border: none;
   padding: 5px 10px;
-  font-weight: bold;
+
   padding: 12px 24px;
-  font-size: 40px;
+
   width: auto;
   height: auto;
+  overflow-y: auto;
 }
