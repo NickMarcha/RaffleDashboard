@@ -18,13 +18,10 @@ const jwtFromEnv = new JWT({
   scopes: SCOPES,
 });
 
-const doc = new GoogleSpreadsheet(
-  "1IaLXgyMT9uX4uqVKvFdThEAT4QsIvRpCXSc2CephOWU",
-  jwtFromEnv
-);
+const doc = new GoogleSpreadsheet(process.env.SHEETS_DB_ID, jwtFromEnv);
 
 const accessCodeDoc = new GoogleSpreadsheet(
-  "1V9pGL5OZhSn63tPSgsfzRuz_C-2mquLnGyi2IS4BT2M",
+  process.env.SHEETS_AUTHDB_ID,
   jwtFromEnv
 );
 

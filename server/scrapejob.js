@@ -18,10 +18,7 @@ const jwtFromEnv = new JWT({
   scopes: SCOPES,
 });
 
-const doc = new GoogleSpreadsheet(
-  "1IaLXgyMT9uX4uqVKvFdThEAT4QsIvRpCXSc2CephOWU",
-  jwtFromEnv
-);
+const doc = new GoogleSpreadsheet(process.env.SHEETS_DB_ID, jwtFromEnv);
 
 const scrapeURL =
   "https://www.againstmalaria.com/Fundraiser.aspx?FundraiserID=8960";
