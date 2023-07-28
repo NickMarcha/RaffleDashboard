@@ -238,6 +238,38 @@ app.get("/api/rollRaffle", auth, async (req, res) => {
   }
 });
 
+/// Rolls raffle without Writing to db
+app.get("/api/rollRaffleNW", auth, async (req, res) => {
+  try {
+    let validRaffleEntries = await fetchValidRaffleEntries();
+    const min = validRaffleEntries[0].rollingSum;
+    logger.info(`Min: ${min}`);
+    const max = validRaffleEntries[validRaffleEntries.length - 1].rollingSum;
+
+    logger.info(`Max: ${max}`);
+    const random = Math.floor(Math.random() * max);
+
+    let winner;
+
+    logger.info(`Random: ${random}`);
+    for (let i = 0; i < validRaffleEntries.length; i++) {
+      if (random < validRaffleEntries[i].rollingSum) {
+        winner = i;
+        break;
+      }
+    }
+
+    let winnerID = validRaffleEntries[winner].index;
+
+    let winnerData = await fetchEntryByID(winnerID);
+
+    res.json(winnerData);
+  } catch (error) {
+    logger.error(error);
+    res.json(error);
+  }
+});
+
 app.post("/api/setEntryToPlayed", auth, async (request, response) => {
   try {
     const entryID = request.body.entryID;
@@ -292,6 +324,41 @@ app.get("/api/sortedByRaffleTime", async (req, res) => {
     logger.info("sortedByRaffleTime");
   } catch (error) {
     logger.info(error);
+    res.json(error);
+  }
+});
+
+app.post("/api/rollRaffles", auth, async (req, res) => {
+  try {
+    const amount = req.body.amount;
+    let validRaffleEntries = await fetchValidRaffleEntries();
+    const min = validRaffleEntries[0].rollingSum;
+    logger.info(`Min: ${min}`);
+    const max = validRaffleEntries[validRaffleEntries.length - 1].rollingSum;
+
+    logger.info(`Max: ${max}`);
+
+    let winners = [];
+    while (winners.length < amount) {
+      const random = Math.floor(Math.random() * max);
+      logger.info(`Random: ${random}`);
+      for (let i = 0; i < validRaffleEntries.length; i++) {
+        if (random < validRaffleEntries[i].rollingSum) {
+          if (!winners.includes(i)) winners.push(i);
+          break;
+        }
+      }
+    }
+
+    let winnerIDs = winners.map((winner) => validRaffleEntries[winner].index);
+
+    let fetches = winnerIDs.map((winnerID) => fetchEntryByID(winnerID));
+
+    Promise.all(fetches).then((values) => {
+      res.json(values);
+    });
+  } catch (error) {
+    logger.error(error);
     res.json(error);
   }
 });
