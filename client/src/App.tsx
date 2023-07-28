@@ -6,6 +6,7 @@ import NoPage from "./pages/NoPage";
 import History from "./pages/History";
 import { useEffect } from "react";
 import React from "react";
+import RaffleMore from "./pages/RaffleMore";
 
 function App() {
   useEffect(() => {
@@ -18,6 +19,7 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="raffle" element={<Raffle />} />
+          <Route path="rafflemore" element={<RaffleMore />} />
           <Route path="history" element={<History />} />
           <Route path="*" element={<NoPage />} />
         </Route>

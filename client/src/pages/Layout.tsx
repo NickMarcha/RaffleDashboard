@@ -24,8 +24,12 @@ const Layout = () => {
                 <Link to="/raffle">Raffle</Link>
               </li>
               <li>
+                <Link to="/rafflemore">RaffleMore</Link>{" "}
+              </li>
+              <li>
                 <Link to="/history">History</Link>
               </li>
+
               <li>
                 <LogoutButton />
               </li>

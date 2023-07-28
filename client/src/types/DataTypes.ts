@@ -1,6 +1,6 @@
 export interface Dono {
   sponsor: string;
-  date?: string;
+  date?: number;
   location: string;
   amount: number;
   message: string;
@@ -11,7 +11,7 @@ export interface Dono {
 const filledDono = (str: string) => {
   return {
     sponsor: str,
-    date: str,
+    date: 0,
     location: str,
     amount: 0,
     message: str,
