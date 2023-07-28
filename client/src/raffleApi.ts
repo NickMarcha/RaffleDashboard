@@ -1,19 +1,18 @@
 import Cookies from "js-cookie";
+import axios from "axios";
+const baseRaffleApiUrl = "/api";
 
-const baseApiUrl = "/api";
+const raffleClient = axios.create({
+  baseURL: baseRaffleApiUrl,
+  headers: { "Content-Type": "application/json" },
+});
 
 export async function login(accessCode: string) {
   try {
-    const response = await fetch(`${baseApiUrl}/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ accessCode }),
-    });
+    const response = await raffleClient.post("/login", { accessCode });
 
-    if (response.ok) {
-      const data = await response.json();
+    if (response.status === 200) {
+      const data = await response.data;
       const token = data.token; // Assuming the API response has a field named "token"
       console.log("Login successful");
       Cookies.set("bearerToken", token, { expires: 1, path: "" });
@@ -21,7 +20,7 @@ export async function login(accessCode: string) {
     } else {
       // Handle login error
       console.log("Login failed");
-      const message = (await response.json()).message;
+      const message = (await response.data).message;
 
       return { success: false, message };
     }
@@ -48,13 +47,11 @@ export function logout() {
   console.log("User logged out");
 }
 
-export async function fetchData() {}
-
 export async function fetchOverallTopDonos() {
   try {
-    const response = await fetch(`${baseApiUrl}/top`);
-    const jsonData = await response.json();
-    return jsonData;
+    return await raffleClient.get("/top").then((response) => {
+      return response.data;
+    });
   } catch (error) {
     console.error("Error fetching data:", error);
   }
@@ -62,9 +59,9 @@ export async function fetchOverallTopDonos() {
 
 export async function fetchTodaysTopDono() {
   try {
-    const response = await fetch(`${baseApiUrl}/todaysTop`);
-    const jsonData = await response.json();
-    return jsonData;
+    return await raffleClient.get("/todaysTop").then((response) => {
+      return response.data;
+    });
   } catch (error) {
     console.error("Error fetching data:", error);
   }
@@ -78,11 +75,13 @@ function getAuthHeader() {
 
 export async function rollRaffle() {
   try {
-    const response = await fetch(`${baseApiUrl}/rollRaffle`, {
-      headers: getAuthHeader(),
-    });
-    const jsonData = await response.json();
-    return jsonData;
+    const response = await raffleClient.get(
+      "/rollRaffle",
+
+      { headers: getAuthHeader() }
+    );
+
+    return response.data;
   } catch (error) {
     console.error("Error fetching data:", error);
   }
@@ -90,9 +89,9 @@ export async function rollRaffle() {
 
 export async function latestDono() {
   try {
-    const response = await fetch(`${baseApiUrl}/latest`);
-    const jsonData = await response.json();
-    return jsonData;
+    return await raffleClient.get("/latest").then((response) => {
+      return response.data;
+    });
   } catch (error) {
     console.error("Error fetching data:", error);
   }
@@ -112,13 +111,13 @@ export async function removeFromRaffle(id: string | undefined) {
     return;
   }
   try {
-    const response = await fetch(`${baseApiUrl}/setEntryToPlayed`, {
-      method: "POST",
-      headers: getAuthHeaderJSONPayload(),
-      body: JSON.stringify({ entryID: id }),
-    });
-    const jsonData = await response.json();
-    return jsonData;
+    const response = await raffleClient.post(
+      "/setEntryToPlayed",
+      { entryID: id },
+      { headers: getAuthHeaderJSONPayload() }
+    );
+
+    return response.data;
   } catch (error) {
     console.error("Error fetching data:", error);
   }
@@ -126,11 +125,11 @@ export async function removeFromRaffle(id: string | undefined) {
 
 export async function doScrape() {
   try {
-    const response = await fetch(`${baseApiUrl}/runScrape`, {
+    const response = await raffleClient.get("/runScrape", {
       headers: getAuthHeader(),
     });
-    const jsonData = await response.json();
-    return jsonData;
+
+    return response.data;
   } catch (error) {
     console.error("Error fetching data:", error);
   }
@@ -138,9 +137,9 @@ export async function doScrape() {
 
 export async function fetchOverallTotals() {
   try {
-    const response = await fetch(`${baseApiUrl}/total`);
-    const jsonData = await response.json();
-    return jsonData;
+    return await raffleClient.get("/total").then((response) => {
+      return response.data;
+    });
   } catch (error) {
     console.error("Error fetching data:", error);
   }
@@ -148,9 +147,9 @@ export async function fetchOverallTotals() {
 
 export async function fetchYeeAndPepeTotal() {
   try {
-    const response = await fetch(`${baseApiUrl}/yeeandpepe`);
-    const jsonData = await response.json();
-    return jsonData;
+    return await raffleClient.get("/yeeandpepe").then((response) => {
+      return response.data;
+    });
   } catch (error) {
     console.error("Error fetching data:", error);
   }
@@ -158,9 +157,9 @@ export async function fetchYeeAndPepeTotal() {
 
 export async function fetchTodaysTotals() {
   try {
-    const response = await fetch(`${baseApiUrl}/todaysTotal`);
-    const jsonData = await response.json();
-    return jsonData;
+    return await raffleClient.get("/todaysTotal").then((response) => {
+      return response.data;
+    });
   } catch (error) {
     console.error("Error fetching data:", error);
   }
@@ -168,9 +167,9 @@ export async function fetchTodaysTotals() {
 
 export async function fetchLatestFiftydonos() {
   try {
-    const response = await fetch(`${baseApiUrl}/latestfifty`);
-    const jsonData = await response.json();
-    return jsonData;
+    return await raffleClient.get("/latestfifty").then((response) => {
+      return response.data;
+    });
   } catch (error) {
     console.error("Error fetching data:", error);
   }
@@ -178,9 +177,9 @@ export async function fetchLatestFiftydonos() {
 
 export async function fetchSortedByRaffleTime() {
   try {
-    const response = await fetch(`${baseApiUrl}/sortedByRaffleTime`);
-    const jsonData = await response.json();
-    return jsonData;
+    return await raffleClient.get("/sortedByRaffleTime").then((response) => {
+      return response.data;
+    });
   } catch (error) {
     console.error("Error fetching data:", error);
   }
