@@ -5,39 +5,9 @@ import { isLoggedIn } from "../raffleApi";
 import "./Layout.css";
 import TedYee from "../assets/images/tedYee.png";
 import React from "react";
+import { sendToClip } from "../util/util";
 
 const Layout = () => {
-  function sendToClip(str: string) {
-    if (typeof navigator.clipboard == "undefined") {
-      console.log("navigator.clipboard");
-      var textArea = document.createElement("textarea");
-      textArea.value = str;
-      textArea.style.position = "fixed"; //avoid scrolling to bottom
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-
-      try {
-        var successful = document.execCommand("copy");
-        var msg = successful ? "successful" : "unsuccessful";
-        console.log(msg);
-      } catch (err) {
-        console.warn("Was not possible to copy te text: ", err);
-      }
-
-      document.body.removeChild(textArea);
-      return;
-    }
-    navigator.clipboard.writeText(str).then(
-      function () {
-        console.info(`successful!`);
-      },
-      function (err) {
-        console.warn("unsuccessful!", err);
-      }
-    );
-  }
-
   return (
     <>
       <nav>
@@ -56,7 +26,9 @@ const Layout = () => {
               <li>
                 <Link to="/history">History</Link>
               </li>
-              <li>{/*<LogoutButton>LogoutButton</LogoutButton>*/}</li>
+              <li>
+                <LogoutButton />
+              </li>
             </ul>
           </div>
         )}

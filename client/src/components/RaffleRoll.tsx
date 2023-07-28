@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { rollRaffle, removeFromRaffle, fetchOverallTotals } from "../raffleApi";
-import { fromSerialDate } from "../utils";
+import { fromSerialDate } from "../util/util";
 import "./RaffleRoll.css";
 import DonoPane from "./DonoPane";
 import { Dono, emptyDono, rollingDono } from "../types/DataTypes";

@@ -1,6 +1,6 @@
 import React from "react";
 import "./DonoPane.css";
-import RenderClickableMessage from "../util/util";
+import { RenderClickableMessage } from "../util/util";
 import { Dono } from "../types/DataTypes";
 
 const DonoPane: React.FC<Dono> = ({
