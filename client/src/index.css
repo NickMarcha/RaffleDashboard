@@ -81,3 +81,6 @@ button:hover {
   background-color: #383838;
   padding: 20px;
 }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

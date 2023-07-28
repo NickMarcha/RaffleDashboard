@@ -63,7 +63,7 @@ const Layout = () => {
         {!isLoggedIn() && <LogginButton />}
 
         <span
-          className="linkSpan"
+          className="text-3xl font-bold underline cursor-copy hover:bg-sky-700 "
           title="Copy To Clipboard"
           onClick={() => {
             sendToClip("https://www.againstmalaria.com/destiny");
