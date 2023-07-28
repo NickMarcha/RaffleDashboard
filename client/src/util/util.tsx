@@ -1,5 +1,4 @@
 import React from "react";
-import "./util.css";
 
 const RenderClickableMessage: React.FC<{ message: string }> = ({ message }) => {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -9,7 +8,7 @@ const RenderClickableMessage: React.FC<{ message: string }> = ({ message }) => {
     if (part.match(urlRegex)) {
       return (
         <a
-          className="aInMessageLink"
+          className="text-blue hover:underline"
           key={index}
           href={part}
           target="_blank"
