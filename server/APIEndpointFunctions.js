@@ -44,7 +44,7 @@ const latestRange = "A15:F15";
 const todaysTopRange = "A19:E19";
 const todaysTotalRange = "A24:A26";
 
-export async function fetchTotal() {
+async function fetchTotal() {
   let result = await APIfetch(fetchRange, APICallsSheet);
   result = {
     donoCount: result[0][0],
@@ -55,7 +55,7 @@ export async function fetchTotal() {
   return result;
 }
 
-export async function fetchTop() {
+async function fetchTop() {
   let result = await APIfetch(topRange, APICallsSheet);
   let data = [];
   for (let i = 0; i < result[0].length && result[0][i] != null; i++) {
@@ -70,13 +70,13 @@ export async function fetchTop() {
   return data;
 }
 
-export async function fetchYeeAndPepe() {
+async function fetchYeeAndPepe() {
   let result = await APIfetch(yeeAndPepeRange, APICallsSheet);
   let data = { yeeDonoTotal: result[0][0], pepeDonoTotal: result[0][1] };
   return data;
 }
 
-export async function fetchLatest() {
+async function fetchLatest() {
   let result = await APIfetch(latestRange, APICallsSheet);
   let data = {
     isActive: result[0][0],
@@ -89,7 +89,7 @@ export async function fetchLatest() {
   return data;
 }
 
-export async function fetchTodaysTop() {
+async function fetchTodaysTop() {
   let result = await APIfetch(todaysTopRange, APICallsSheet);
   let data = {
     sponsor: result[0][0],
@@ -101,7 +101,7 @@ export async function fetchTodaysTop() {
   return data;
 }
 
-export async function fetchTodaysTotal() {
+async function fetchTodaysTotal() {
   let result = await APIfetch(todaysTotalRange, APICallsSheet);
   let data = {
     yeeTotal: result[0][0],
@@ -144,7 +144,7 @@ async function APIfetch(range, sheet) {
 
 const accessCodeRange = "A2:D50";
 
-export async function fetchAccessCodes() {
+async function fetchAccessCodes() {
   let result = await APIfetch(accessCodeRange, accessCodeSheet);
   let data = [];
   for (let i = 0; i < result[0].length && result[0][i] != null; i++) {
@@ -162,7 +162,7 @@ const proccessedSheet = doc.sheetsByTitle["Proccessed"];
 
 logger.info(proccessedSheet.title);
 
-export async function fetchValidRaffleEntries() {
+async function fetchValidRaffleEntries() {
   await proccessedSheet.loadCells();
   let validRaffleEntries = [];
   let i = 2;
@@ -187,7 +187,7 @@ export async function fetchValidRaffleEntries() {
   return validRaffleEntries;
 }
 
-export async function fetchEntryByID(entryID) {
+async function fetchEntryByID(entryID) {
   await proccessedSheet.loadCells(`A${entryID}:J${entryID}`);
   const hasbeenplayedcell = proccessedSheet.getCellByA1(`A${entryID}`);
   const hasbeenplayed = hasbeenplayedcell.value;
@@ -208,7 +208,7 @@ export async function fetchEntryByID(entryID) {
   return entryData;
 }
 
-export async function setEntryToPlayed(entryID, updatedBy) {
+async function setEntryToPlayed(entryID, updatedBy) {
   await proccessedSheet.loadCells(`A${entryID}:J${entryID}`);
   const hasbeenplayedcell = proccessedSheet.getCellByA1(`A${entryID}`);
   const lastUpdatedCell = proccessedSheet.getCellByA1(`I${entryID}`);
@@ -220,7 +220,7 @@ export async function setEntryToPlayed(entryID, updatedBy) {
   await proccessedSheet.saveUpdatedCells();
 }
 
-export async function setEntryTimeStamp(entryID, updatedBy) {
+async function setEntryTimeStamp(entryID, updatedBy) {
   try {
     await proccessedSheet.loadCells(`I${entryID}:J${entryID}`);
     const lastUpdatedCell = proccessedSheet.getCellByA1(`I${entryID}`);
@@ -236,7 +236,7 @@ export async function setEntryTimeStamp(entryID, updatedBy) {
 
 const latest50Range = "B29:F78";
 
-export async function fetchLatest50() {
+async function fetchLatest50() {
   let result = await APIfetch(latest50Range, APICallsSheet);
   let data = [];
   for (let i = 0; i < result[0].length && result[0][i] != null; i++) {
@@ -257,7 +257,7 @@ const sortByRaffleTime = doc.sheetsByTitle["SortByRaffleTime"];
 
 logger.info(sortByRaffleTime.title);
 
-export async function fetchEntriesSortedByRaffleTime() {
+async function fetchEntriesSortedByRaffleTime() {
   await sortByRaffleTime.loadCells();
   let i = 2;
   let raffleEntries = [];
@@ -277,3 +277,20 @@ export async function fetchEntriesSortedByRaffleTime() {
 
   return raffleEntries;
 }
+
+const APIEndPoint = {
+  fetchTotal,
+  fetchTop,
+  fetchYeeAndPepe,
+  fetchLatest,
+  fetchTodaysTop,
+  fetchTodaysTotal,
+  fetchAccessCodes,
+  fetchValidRaffleEntries,
+  fetchEntryByID,
+  setEntryToPlayed,
+  fetchLatest50,
+  fetchEntriesSortedByRaffleTime,
+  setEntryTimeStamp,
+};
+export default APIEndPoint;

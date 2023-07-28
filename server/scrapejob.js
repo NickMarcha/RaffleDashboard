@@ -37,7 +37,7 @@ logger.info(rawDataSheet.title);
 
 const refreshMilliseconds = 300000; // 5 minutes
 
-export async function fetchData() {
+export async function fetchScrapeJob() {
   logger.info(`Starting load from: ${scrapeURL}`);
   await axios
     .get(scrapeURL)

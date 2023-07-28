@@ -1,27 +1,13 @@
 import express from "express";
 import schedule from "node-schedule";
-import { fetchData } from "./scrapejob.js";
+import { fetchScrapeJob } from "./scrapejob.js";
 import bodyParser from "body-parser";
 import jwt from "jsonwebtoken";
 import auth from "./auth.js";
 import rateLimit from "express-rate-limit";
-import {
-  fetchTotal,
-  fetchTop,
-  fetchYeeAndPepe,
-  fetchLatest,
-  fetchTodaysTop,
-  fetchTodaysTotal,
-  fetchAccessCodes,
-  fetchValidRaffleEntries,
-  fetchEntryByID,
-  setEntryToPlayed,
-  fetchLatest50,
-  fetchEntriesSortedByRaffleTime,
-  setEntryTimeStamp,
-} from "./APIEndpointFunctions.js";
 import cors from "cors";
 import logger from "./logger.js";
+import APIEndPoint from "./APIEndpointFunctions.js";
 
 const app = express();
 const normalizePort = (val) => {
@@ -75,7 +61,7 @@ const job = schedule.scheduleJob("*/15 * * * *", () => {
   try {
     logger.info("Current time:", new Date());
     logger.info("Running Scrape Job");
-    fetchData();
+    APIEndPoint.fetchData();
   } catch (error) {
     logger.error(error);
   }
@@ -84,7 +70,7 @@ const job = schedule.scheduleJob("*/15 * * * *", () => {
 app.post("/api/login", limiter, async (request, response) => {
   try {
     let reqaccessCode = request.body.accessCode;
-    let accesscodes = await fetchAccessCodes();
+    let accesscodes = await APIEndPoint.fetchAccessCodes();
     //logger.info(accesscodes);
 
     logger.info({ reqaccessCode });
@@ -147,7 +133,7 @@ app.get("/api/auth-endpoint", auth, (request, response) => {
 
 app.get("/api/total", async (req, res) => {
   try {
-    res.json(await fetchTotal());
+    res.json(await APIEndPoint.fetchTotal());
     logger.info("Total");
   } catch (error) {
     logger.error(error);
@@ -157,7 +143,7 @@ app.get("/api/total", async (req, res) => {
 
 app.get("/api/top", async (req, res) => {
   try {
-    res.json(await fetchTop());
+    res.json(await APIEndPoint.fetchTop());
     logger.info("Top");
   } catch (error) {
     logger.error(error);
@@ -167,7 +153,7 @@ app.get("/api/top", async (req, res) => {
 
 app.get("/api/yeeandpepe", async (req, res) => {
   try {
-    res.json(await fetchYeeAndPepe());
+    res.json(await APIEndPoint.fetchYeeAndPepe());
     logger.info("Yee and Pepe");
   } catch (error) {
     logger.error(error);
@@ -177,7 +163,7 @@ app.get("/api/yeeandpepe", async (req, res) => {
 
 app.get("/api/latest", async (req, res) => {
   try {
-    res.json(await fetchLatest());
+    res.json(await APIEndPoint.fetchLatest());
     logger.info("Latest");
   } catch (error) {
     logger.error(error);
@@ -187,7 +173,7 @@ app.get("/api/latest", async (req, res) => {
 
 app.get("/api/todaysTop", async (req, res) => {
   try {
-    res.json(await fetchTodaysTop());
+    res.json(await APIEndPoint.fetchTodaysTop());
     logger.info("Todays Top");
   } catch (error) {
     logger.error(error);
@@ -197,7 +183,7 @@ app.get("/api/todaysTop", async (req, res) => {
 
 app.get("/api/todaysTotal", async (req, res) => {
   try {
-    res.json(await fetchTodaysTotal());
+    res.json(await APIEndPoint.fetchTodaysTotal());
     logger.info("Todays Total");
   } catch (error) {
     logger.error(error);
@@ -207,7 +193,7 @@ app.get("/api/todaysTotal", async (req, res) => {
 
 app.get("/api/rollRaffle", auth, async (req, res) => {
   try {
-    let validRaffleEntries = await fetchValidRaffleEntries();
+    let validRaffleEntries = await APIEndPoint.fetchValidRaffleEntries();
     const min = validRaffleEntries[0].rollingSum;
     logger.info(`Min: ${min}`);
     const max = validRaffleEntries[validRaffleEntries.length - 1].rollingSum;
@@ -227,11 +213,11 @@ app.get("/api/rollRaffle", auth, async (req, res) => {
 
     let winnerID = validRaffleEntries[winner].index;
 
-    let winnerData = await fetchEntryByID(winnerID);
+    let winnerData = await APIEndPoint.fetchEntryByID(winnerID);
 
     res.json(winnerData);
 
-    setEntryTimeStamp(winnerID, req.alias);
+    APIEndPoint.setEntryTimeStamp(winnerID, req.alias);
   } catch (error) {
     logger.error(error);
     res.json(error);
@@ -241,7 +227,7 @@ app.get("/api/rollRaffle", auth, async (req, res) => {
 /// Rolls raffle without Writing to db
 app.get("/api/rollRaffleNW", auth, async (req, res) => {
   try {
-    let validRaffleEntries = await fetchValidRaffleEntries();
+    let validRaffleEntries = await APIEndPoint.fetchValidRaffleEntries();
     const min = validRaffleEntries[0].rollingSum;
     logger.info(`Min: ${min}`);
     const max = validRaffleEntries[validRaffleEntries.length - 1].rollingSum;
@@ -261,7 +247,7 @@ app.get("/api/rollRaffleNW", auth, async (req, res) => {
 
     let winnerID = validRaffleEntries[winner].index;
 
-    let winnerData = await fetchEntryByID(winnerID);
+    let winnerData = await APIEndPoint.fetchEntryByID(winnerID);
 
     res.json(winnerData);
   } catch (error) {
@@ -273,7 +259,7 @@ app.get("/api/rollRaffleNW", auth, async (req, res) => {
 app.post("/api/setEntryToPlayed", auth, async (request, response) => {
   try {
     const entryID = request.body.entryID;
-    await setEntryToPlayed(entryID, request.alias);
+    await APIEndPoint.setEntryToPlayed(entryID, request.alias);
     response.status(200).send({
       message: "Updated Entry",
     });
@@ -295,7 +281,7 @@ const scrapelimiter = rateLimit({
 app.get("/api/runScrape", auth, scrapelimiter, async (req, res) => {
   logger.info(`Scrape requested by ${req.alias}`);
   try {
-    await fetchData();
+    await fetchScrapeJob();
 
     res.status(200).send({
       message: "Scrape job finished",
@@ -310,7 +296,7 @@ app.get("/api/runScrape", auth, scrapelimiter, async (req, res) => {
 
 app.get("/api/latestfifty", async (req, res) => {
   try {
-    res.json(await fetchLatest50());
+    res.json(await APIEndPoint.fetchLatest50());
     logger.info("latestfifty");
   } catch (error) {
     logger.info(error);
@@ -320,7 +306,7 @@ app.get("/api/latestfifty", async (req, res) => {
 
 app.get("/api/sortedByRaffleTime", async (req, res) => {
   try {
-    res.json(await fetchEntriesSortedByRaffleTime());
+    res.json(await APIEndPoint.fetchEntriesSortedByRaffleTime());
     logger.info("sortedByRaffleTime");
   } catch (error) {
     logger.info(error);
@@ -331,7 +317,7 @@ app.get("/api/sortedByRaffleTime", async (req, res) => {
 app.post("/api/rollRaffles", auth, async (req, res) => {
   try {
     const amount = req.body.amount;
-    let validRaffleEntries = await fetchValidRaffleEntries();
+    let validRaffleEntries = await APIEndPoint.fetchValidRaffleEntries();
     const min = validRaffleEntries[0].rollingSum;
     logger.info(`Min: ${min}`);
     const max = validRaffleEntries[validRaffleEntries.length - 1].rollingSum;
@@ -352,7 +338,9 @@ app.post("/api/rollRaffles", auth, async (req, res) => {
 
     let winnerIDs = winners.map((winner) => validRaffleEntries[winner].index);
 
-    let fetches = winnerIDs.map((winnerID) => fetchEntryByID(winnerID));
+    let fetches = winnerIDs.map((winnerID) =>
+      APIEndPoint.fetchEntryByID(winnerID)
+    );
 
     Promise.all(fetches).then((values) => {
       res.json(values);
