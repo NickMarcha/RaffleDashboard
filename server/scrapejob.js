@@ -1,25 +1,8 @@
-import { JWT } from "google-auth-library";
-import { GoogleSpreadsheet } from "google-spreadsheet";
-
 import axios from "axios";
 import cheerio from "cheerio";
 import "dotenv/config";
-
-import { toSerialDate } from "./utils.js";
 import logger from "./logger.js";
-
-const SCOPES = [
-  "https://www.googleapis.com/auth/spreadsheets",
-  "https://www.googleapis.com/auth/drive.file",
-];
-
-const jwtFromEnv = new JWT({
-  email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-  key: process.env.GOOGLE_PRIVATE_KEY,
-  scopes: SCOPES,
-});
-
-const doc = new GoogleSpreadsheet(process.env.SHEETS_DB_ID, jwtFromEnv);
+import APIEndPoint from "./APIEndpointFunctions.js";
 
 const scrapeURL =
   "https://www.againstmalaria.com/Fundraiser.aspx?FundraiserID=8960";
@@ -28,14 +11,6 @@ const rowSelectorOne = "tr.TableItemStyle.TableItemText";
 const rowSelectorTwo = "tr.TableAlternatingItemStyle.TableItemText";
 const totalSelector =
   "#MainContent_UcFundraiserSponsors1_ucPager2_pnlTextCounter";
-
-await doc.loadInfo(); // loads document properties and worksheets
-logger.info(doc.title);
-
-const rawDataSheet = doc.sheetsByTitle["Raw Data"];
-logger.info(rawDataSheet.title);
-
-const refreshMilliseconds = 300000; // 5 minutes
 
 export async function fetchScrapeJob() {
   logger.info(`Starting load from: ${scrapeURL}`);
@@ -127,36 +102,7 @@ export async function fetchScrapeJob() {
         }
       });
 
-      let start = scrapedTotalDonos - scrapedEntries.length + 2;
-      await rawDataSheet.loadCells(`A${start}:I${scrapedTotalDonos + 1}`);
-      logger.info(
-        `Loaded cells in Spreadsheet from A${start}:I${scrapedTotalDonos + 1}`
-      );
-
-      scrapedEntries.reverse().forEach((entry, index) => {
-        const row = index + start;
-        rawDataSheet.getCellByA1(`A${row}`).value = entry["Sponsor"];
-        rawDataSheet.getCellByA1(`B${row}`).numberValue = toSerialDate(
-          entry["Date"]
-        );
-        rawDataSheet.getCellByA1(`C${row}`).value = entry["Location"];
-        rawDataSheet.getCellByA1(`D${row}`).value = entry["Amount"];
-        rawDataSheet.getCellByA1(`E${row}`).value = entry["US$"];
-        rawDataSheet.getCellByA1(`F${row}`).value = entry["Gift Aid"];
-        rawDataSheet.getCellByA1(`G${row}`).value = entry["Message"];
-        rawDataSheet.getCellByA1(`H${row}`).value = entry["Nets"];
-        rawDataSheet.getCellByA1(`I${row}`).value = entry["People Saved"];
-      });
-      logger.info("Prepared cells for update");
-
-      rawDataSheet
-        .saveUpdatedCells()
-        .then(() => {
-          logger.info("Cells updated");
-        })
-        .catch((error) => {
-          logger.error(error);
-        });
+      await APIEndPoint.updateLatest(scrapedEntries, scrapedTotalDonos);
     })
     .catch((error) => {
       logger.error(error);

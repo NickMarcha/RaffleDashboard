@@ -4,6 +4,7 @@ import {
   base25stringToNumber,
   numberToBase25String,
   fromSerialDate,
+  toSerialDate,
 } from "./utils.js";
 import logger from "./logger.js";
 
@@ -278,6 +279,42 @@ async function fetchEntriesSortedByRaffleTime() {
   return raffleEntries;
 }
 
+const rawDataSheet = doc.sheetsByTitle["Raw Data"];
+logger.info(rawDataSheet.title);
+
+async function updateLatest(scrapedEntries, scrapedTotalDonos) {
+  let start = scrapedTotalDonos - scrapedEntries.length + 2;
+  await rawDataSheet.loadCells(`A${start}:I${scrapedTotalDonos + 1}`);
+  logger.info(
+    `Loaded cells in Spreadsheet from A${start}:I${scrapedTotalDonos + 1}`
+  );
+
+  scrapedEntries.reverse().forEach((entry, index) => {
+    const row = index + start;
+    rawDataSheet.getCellByA1(`A${row}`).value = entry["Sponsor"];
+    rawDataSheet.getCellByA1(`B${row}`).numberValue = toSerialDate(
+      entry["Date"]
+    );
+    rawDataSheet.getCellByA1(`C${row}`).value = entry["Location"];
+    rawDataSheet.getCellByA1(`D${row}`).value = entry["Amount"];
+    rawDataSheet.getCellByA1(`E${row}`).value = entry["US$"];
+    rawDataSheet.getCellByA1(`F${row}`).value = entry["Gift Aid"];
+    rawDataSheet.getCellByA1(`G${row}`).value = entry["Message"];
+    rawDataSheet.getCellByA1(`H${row}`).value = entry["Nets"];
+    rawDataSheet.getCellByA1(`I${row}`).value = entry["People Saved"];
+  });
+  logger.info("Prepared cells for update");
+
+  rawDataSheet
+    .saveUpdatedCells()
+    .then(() => {
+      logger.info("Cells updated");
+    })
+    .catch((error) => {
+      logger.error(error);
+    });
+}
+
 const APIEndPoint = {
   fetchTotal,
   fetchTop,
@@ -292,5 +329,6 @@ const APIEndPoint = {
   fetchLatest50,
   fetchEntriesSortedByRaffleTime,
   setEntryTimeStamp,
+  updateLatest,
 };
 export default APIEndPoint;
