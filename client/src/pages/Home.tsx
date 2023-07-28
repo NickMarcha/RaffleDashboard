@@ -4,6 +4,7 @@ import OverallTotals from "../components/OverallTotals";
 import YeeAndPepeTotal from "../components/YeeAndPepeTotal";
 import TodaysTotals from "../components/TodaysTotals";
 import LatestDono from "../components/LatestDono";
+import React from "react";
 const Home = () => {
   return (
     <div id="Home">

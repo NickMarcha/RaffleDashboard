@@ -5,6 +5,7 @@ import {
   numberToBase25String,
   fromSerialDate,
 } from "./utils.js";
+import logger from "./logger.js";
 
 import "dotenv/config";
 const SCOPES = [
@@ -27,14 +28,14 @@ const accessCodeDoc = new GoogleSpreadsheet(
 
 await accessCodeDoc.loadInfo();
 await doc.loadInfo(); // loads document properties and worksheets
-console.log(doc.title);
-console.log(accessCodeDoc.title);
+logger.info(doc.title);
+logger.info(accessCodeDoc.title);
 
 const APICallsSheet = doc.sheetsByTitle["APICalls"];
 
 const accessCodeSheet = accessCodeDoc.sheetsByTitle["AccessCode"];
 
-console.log(APICallsSheet.title);
+logger.info(APICallsSheet.title);
 
 const fetchRange = "A2:D2";
 const topRange = "A5:E8";
@@ -159,7 +160,7 @@ export async function fetchAccessCodes() {
 
 const proccessedSheet = doc.sheetsByTitle["Proccessed"];
 
-console.log(proccessedSheet.title);
+logger.info(proccessedSheet.title);
 
 export async function fetchValidRaffleEntries() {
   await proccessedSheet.loadCells();
@@ -179,8 +180,8 @@ export async function fetchValidRaffleEntries() {
       });
     }
     i++;
-    //console.log(i);
-    //console.log(proccessedSheet.getCellByA1(`B${i}`).value);
+    //logger.info(i);
+    //logger.info(proccessedSheet.getCellByA1(`B${i}`).value);
   }
 
   return validRaffleEntries;
@@ -220,13 +221,17 @@ export async function setEntryToPlayed(entryID, updatedBy) {
 }
 
 export async function setEntryTimeStamp(entryID, updatedBy) {
-  await proccessedSheet.loadCells(`I${entryID}:J${entryID}`);
-  const lastUpdatedCell = proccessedSheet.getCellByA1(`I${entryID}`);
-  const updatedByCell = proccessedSheet.getCellByA1(`J${entryID}`);
+  try {
+    await proccessedSheet.loadCells(`I${entryID}:J${entryID}`);
+    const lastUpdatedCell = proccessedSheet.getCellByA1(`I${entryID}`);
+    const updatedByCell = proccessedSheet.getCellByA1(`J${entryID}`);
 
-  lastUpdatedCell.value = new Date(Date.now()).toISOString();
-  updatedByCell.value = updatedBy;
-  await proccessedSheet.saveUpdatedCells();
+    lastUpdatedCell.value = new Date(Date.now()).toISOString();
+    updatedByCell.value = updatedBy;
+    await proccessedSheet.saveUpdatedCells();
+  } catch (error) {
+    logger.error(error);
+  }
 }
 
 const latest50Range = "B29:F78";
@@ -250,7 +255,7 @@ export async function fetchLatest50() {
 
 const sortByRaffleTime = doc.sheetsByTitle["SortByRaffleTime"];
 
-console.log(sortByRaffleTime.title);
+logger.info(sortByRaffleTime.title);
 
 export async function fetchEntriesSortedByRaffleTime() {
   await sortByRaffleTime.loadCells();

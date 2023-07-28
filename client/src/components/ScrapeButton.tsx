@@ -2,8 +2,10 @@ import { doScrape } from "../raffleApi";
 import { useState } from "react";
 import "./ScrapeButton.css";
 import hmemote from "../assets/images/hackerman.png";
+import React from "react";
+
 const ScrapeButton = () => {
-  const [statusStr, setStatusstr] = useState(null);
+  const [statusStr, setStatusstr] = useState<string | null>(null);
   const handleScrape = async () => {
     setStatusstr("Scraping...");
     let result = await doScrape();

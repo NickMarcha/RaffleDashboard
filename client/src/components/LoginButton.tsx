@@ -8,7 +8,9 @@ const LoginButton = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const handleAccessCodeChange = (event) => {
+  const handleAccessCodeChange: React.ChangeEventHandler<HTMLInputElement> = (
+    event
+  ) => {
     setAccessCode(event.target.value);
   };
 

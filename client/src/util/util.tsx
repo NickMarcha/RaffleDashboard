@@ -1,10 +1,11 @@
+import React from "react";
 import "./util.css";
 
-export function renderClickableMessage(message) {
+const RenderClickableMessage: React.FC<{ message: string }> = ({ message }) => {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const parts = message.split(urlRegex);
 
-  return parts.map((part, index) => {
+  const elements: (string | React.JSX.Element)[] = parts.map((part, index) => {
     if (part.match(urlRegex)) {
       return (
         <a
@@ -21,4 +22,8 @@ export function renderClickableMessage(message) {
       return part;
     }
   });
-}
+
+  return <> {elements}</>;
+};
+
+export default RenderClickableMessage;

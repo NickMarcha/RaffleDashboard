@@ -21,6 +21,7 @@ import {
   setEntryTimeStamp,
 } from "./APIEndpointFunctions.js";
 import cors from "cors";
+import logger from "./logger.js";
 
 const app = express();
 const normalizePort = (val) => {
@@ -72,11 +73,11 @@ app.get("/", function (req, res) {
 */
 const job = schedule.scheduleJob("*/15 * * * *", () => {
   try {
-    console.log("Current time:", new Date());
-    console.log("Running Scrape Job");
+    logger.info("Current time:", new Date());
+    logger.info("Running Scrape Job");
     fetchData();
   } catch (error) {
-    console.log(error);
+    logger.error(error);
   }
 });
 
@@ -84,9 +85,9 @@ app.post("/api/login", limiter, async (request, response) => {
   try {
     let reqaccessCode = request.body.accessCode;
     let accesscodes = await fetchAccessCodes();
-    //console.log(accesscodes);
+    //logger.info(accesscodes);
 
-    console.log({ reqaccessCode });
+    logger.info({ reqaccessCode });
     let result = accesscodes.find(
       (entry) =>
         "" + entry.accessCode === reqaccessCode &&
@@ -119,7 +120,7 @@ app.post("/api/login", limiter, async (request, response) => {
       }, 2000); // Delay of 2000 milliseconds (2 seconds)
     }
   } catch (error) {
-    console.log(error);
+    logger.error(error);
     response.json(error);
   }
 });
@@ -129,7 +130,7 @@ app.get("/api/free-endpoint", (request, response) => {
   try {
     response.json({ message: "You are free to access me anytime" });
   } catch (error) {
-    console.log(error);
+    logger.info(error);
     response.json(error);
   }
 });
@@ -139,7 +140,7 @@ app.get("/api/auth-endpoint", auth, (request, response) => {
   try {
     response.json({ message: "You are authorized to access me" });
   } catch (error) {
-    console.log(error);
+    logger.error(error);
     response.json(error);
   }
 });
@@ -147,9 +148,9 @@ app.get("/api/auth-endpoint", auth, (request, response) => {
 app.get("/api/total", async (req, res) => {
   try {
     res.json(await fetchTotal());
-    console.log("Total");
+    logger.info("Total");
   } catch (error) {
-    console.log(error);
+    logger.error(error);
     res.json(error);
   }
 });
@@ -157,9 +158,9 @@ app.get("/api/total", async (req, res) => {
 app.get("/api/top", async (req, res) => {
   try {
     res.json(await fetchTop());
-    console.log("Top");
+    logger.info("Top");
   } catch (error) {
-    console.log(error);
+    logger.error(error);
     res.json(error);
   }
 });
@@ -167,9 +168,9 @@ app.get("/api/top", async (req, res) => {
 app.get("/api/yeeandpepe", async (req, res) => {
   try {
     res.json(await fetchYeeAndPepe());
-    console.log("Yee and Pepe");
+    logger.info("Yee and Pepe");
   } catch (error) {
-    console.log(error);
+    logger.error(error);
     res.json(error);
   }
 });
@@ -177,9 +178,9 @@ app.get("/api/yeeandpepe", async (req, res) => {
 app.get("/api/latest", async (req, res) => {
   try {
     res.json(await fetchLatest());
-    console.log("Latest");
+    logger.info("Latest");
   } catch (error) {
-    console.log(error);
+    logger.error(error);
     res.json(error);
   }
 });
@@ -187,9 +188,9 @@ app.get("/api/latest", async (req, res) => {
 app.get("/api/todaysTop", async (req, res) => {
   try {
     res.json(await fetchTodaysTop());
-    console.log("Todays Top");
+    logger.info("Todays Top");
   } catch (error) {
-    console.log(error);
+    logger.error(error);
     res.json(error);
   }
 });
@@ -197,9 +198,9 @@ app.get("/api/todaysTop", async (req, res) => {
 app.get("/api/todaysTotal", async (req, res) => {
   try {
     res.json(await fetchTodaysTotal());
-    console.log("Todays Total");
+    logger.info("Todays Total");
   } catch (error) {
-    console.log(error);
+    logger.error(error);
     res.json(error);
   }
 });
@@ -208,15 +209,15 @@ app.get("/api/rollRaffle", auth, async (req, res) => {
   try {
     let validRaffleEntries = await fetchValidRaffleEntries();
     const min = validRaffleEntries[0].rollingSum;
-    console.log(`Min: ${min}`);
+    logger.info(`Min: ${min}`);
     const max = validRaffleEntries[validRaffleEntries.length - 1].rollingSum;
 
-    console.log(`Max: ${max}`);
+    logger.info(`Max: ${max}`);
     const random = Math.floor(Math.random() * max);
 
     let winner;
 
-    console.log(`Random: ${random}`);
+    logger.info(`Random: ${random}`);
     for (let i = 0; i < validRaffleEntries.length; i++) {
       if (random < validRaffleEntries[i].rollingSum) {
         winner = i;
@@ -232,7 +233,7 @@ app.get("/api/rollRaffle", auth, async (req, res) => {
 
     setEntryTimeStamp(winnerID, req.alias);
   } catch (error) {
-    console.log(error);
+    logger.error(error);
     res.json(error);
   }
 });
@@ -245,7 +246,7 @@ app.post("/api/setEntryToPlayed", auth, async (request, response) => {
       message: "Updated Entry",
     });
   } catch (error) {
-    console.log(error);
+    logger.error(error);
     response.status(404).send({
       message: "Something went wrong",
     });
@@ -260,7 +261,7 @@ const scrapelimiter = rateLimit({
 });
 
 app.get("/api/runScrape", auth, scrapelimiter, async (req, res) => {
-  console.log(`Scrape requested by ${req.alias}`);
+  logger.info(`Scrape requested by ${req.alias}`);
   try {
     await fetchData();
 
@@ -268,7 +269,7 @@ app.get("/api/runScrape", auth, scrapelimiter, async (req, res) => {
       message: "Scrape job finished",
     });
   } catch (error) {
-    console.log(error);
+    logger.error(error);
     res.status(404).send({
       message: "Something went wrong",
     });
@@ -278,9 +279,9 @@ app.get("/api/runScrape", auth, scrapelimiter, async (req, res) => {
 app.get("/api/latestfifty", async (req, res) => {
   try {
     res.json(await fetchLatest50());
-    console.log("latestfifty");
+    logger.info("latestfifty");
   } catch (error) {
-    console.log(error);
+    logger.info(error);
     res.json(error);
   }
 });
@@ -288,9 +289,9 @@ app.get("/api/latestfifty", async (req, res) => {
 app.get("/api/sortedByRaffleTime", async (req, res) => {
   try {
     res.json(await fetchEntriesSortedByRaffleTime());
-    console.log("sortedByRaffleTime");
+    logger.info("sortedByRaffleTime");
   } catch (error) {
-    console.log(error);
+    logger.info(error);
     res.json(error);
   }
 });
@@ -300,5 +301,5 @@ app.use((req, res, next) => {
   res.status(404).send({ message: "404: endpoint not found" });
 });
 app.listen(port, () => {
-  console.log(`Now listening on port ${port}`);
+  logger.info(`Now listening on port ${port}`);
 });

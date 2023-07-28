@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { fetchOverallTotals } from "../raffleApi";
 
 const OverallTotals = () => {
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<any>([]);
 
   useEffect(() => {
     async function setFetchData() {

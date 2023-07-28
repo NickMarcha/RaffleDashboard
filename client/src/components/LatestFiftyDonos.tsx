@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { fetchLatestFiftydonos } from "../raffleApi";
 import "./LatestFiftyDonos.css";
+import { Dono } from "../types/DataTypes";
 
 const LatestFiftyDonos = () => {
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<Dono[]>([]);
 
   useEffect(() => {
     async function setFetchData() {

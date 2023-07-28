@@ -3,11 +3,12 @@ import { rollRaffle, removeFromRaffle, fetchOverallTotals } from "../raffleApi";
 import { fromSerialDate } from "../utils";
 import "./RaffleRoll.css";
 import DonoPane from "./DonoPane";
+import { Dono, emptyDono, rollingDono } from "../types/DataTypes";
 
 const RaffleRoll = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState(null);
-  const [item, setItem] = useState({});
+  const [item, setItem] = useState<Dono>(emptyDono);
   const [suggestedSkipGoal, setSuggestedSkipGoal] = useState(0);
   const aFactor = 15;
   const explanation = `MAX(dono amount +${aFactor}, f(donosInPool)) \nf(x) = 20+((250-20)/1.01^x)`;
@@ -18,11 +19,6 @@ const RaffleRoll = () => {
 
   //f(x) = 20+((250-20)/1.01^x
   const getSuggestedSkip = async () => {
-    if (item === {}) return;
-    if (item.amount === "rolling...") {
-      setSuggestedSkipGoal("rolling...");
-      return;
-    }
     let result = await fetchOverallTotals();
     let suggestion = 20 + (250 - 20) / Math.pow(1.01, result.raffleDonoCount);
     setSuggestedSkipGoal(
@@ -36,18 +32,11 @@ const RaffleRoll = () => {
 
   const handleModalClose = () => {
     setIsModalOpen(false);
-    setItem({});
+    setItem(emptyDono);
   };
 
-  const rollingItem = {
-    sponsor: "rolling...",
-    date: "rolling...",
-    location: "rolling...",
-    amount: "rolling...",
-    message: "rolling...",
-  };
   const handleRollRaffle = async () => {
-    setItem(rollingItem);
+    setItem(rollingDono);
 
     let result = await rollRaffle();
 
@@ -57,7 +46,7 @@ const RaffleRoll = () => {
   const handleRemoveFromRaffle = async () => {
     const result = await removeFromRaffle(item.entryID);
     setIsModalOpen(false);
-    setItem({});
+    setItem(emptyDono);
   };
 
   return (

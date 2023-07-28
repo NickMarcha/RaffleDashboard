@@ -2,7 +2,7 @@ import Cookies from "js-cookie";
 
 const baseApiUrl = "/api";
 
-export async function login(accessCode) {
+export async function login(accessCode: string) {
   try {
     const response = await fetch(`${baseApiUrl}/login`, {
       method: "POST",
@@ -21,7 +21,7 @@ export async function login(accessCode) {
     } else {
       // Handle login error
       console.log("Login failed");
-      const message = await response.json().message;
+      const message = (await response.json()).message;
 
       return { success: false, message };
     }
@@ -106,7 +106,11 @@ function getAuthHeaderJSONPayload() {
   };
 }
 
-export async function removeFromRaffle(id) {
+export async function removeFromRaffle(id: string | undefined) {
+  if (id === undefined) {
+    console.error("ID is undefined");
+    return;
+  }
   try {
     const response = await fetch(`${baseApiUrl}/setEntryToPlayed`, {
       method: "POST",

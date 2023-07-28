@@ -1,11 +1,12 @@
 import { JWT } from "google-auth-library";
 import { GoogleSpreadsheet } from "google-spreadsheet";
 
-import axios, { isCancel, AxiosError } from "axios";
+import axios from "axios";
 import cheerio from "cheerio";
 import "dotenv/config";
 
 import { toSerialDate } from "./utils.js";
+import logger from "./logger.js";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/spreadsheets",
@@ -29,25 +30,24 @@ const totalSelector =
   "#MainContent_UcFundraiserSponsors1_ucPager2_pnlTextCounter";
 
 await doc.loadInfo(); // loads document properties and worksheets
-console.log(doc.title);
+logger.info(doc.title);
 
 const rawDataSheet = doc.sheetsByTitle["Raw Data"];
-
-console.log(rawDataSheet.title);
+logger.info(rawDataSheet.title);
 
 const refreshMilliseconds = 300000; // 5 minutes
 
 export async function fetchData() {
-  console.log(`Starting load from: ${scrapeURL}`);
+  logger.info(`Starting load from: ${scrapeURL}`);
   await axios
     .get(scrapeURL)
     .then(async (response) => {
-      console.log(`Loaded`);
+      logger.info(`Loaded`);
       const html = response.data;
       const $ = cheerio.load(html);
 
       const tableExists = $(tableSelector).length > 0;
-      console.log(`Table exists: ${tableExists}`);
+      logger.info(`Table exists: ${tableExists}`);
 
       const scrapedTotalDonos = +$(totalSelector)
         .text()
@@ -77,7 +77,7 @@ export async function fetchData() {
           .filter((line) => line !== "");
         dataTwo.push(rowLines);
       });
-      console.log(`Scraped ${dataOne.length + dataTwo.length} rows`);
+      logger.info(`Scraped ${dataOne.length + dataTwo.length} rows`);
 
       const zipped = dataOne.map((value, index) => [value, dataTwo[index]]);
       const scrapedEntries = [].concat(...zipped).map((entry) => {
@@ -129,7 +129,7 @@ export async function fetchData() {
 
       let start = scrapedTotalDonos - scrapedEntries.length + 2;
       await rawDataSheet.loadCells(`A${start}:I${scrapedTotalDonos + 1}`);
-      console.log(
+      logger.info(
         `Loaded cells in Spreadsheet from A${start}:I${scrapedTotalDonos + 1}`
       );
 
@@ -147,18 +147,18 @@ export async function fetchData() {
         rawDataSheet.getCellByA1(`H${row}`).value = entry["Nets"];
         rawDataSheet.getCellByA1(`I${row}`).value = entry["People Saved"];
       });
-      console.log("Prepared cells for update");
+      logger.info("Prepared cells for update");
 
       rawDataSheet
         .saveUpdatedCells()
         .then(() => {
-          console.log("Cells updated");
+          logger.info("Cells updated");
         })
         .catch((error) => {
-          console.error(error);
+          logger.error(error);
         });
     })
     .catch((error) => {
-      console.error(error);
+      logger.error(error);
     });
 }

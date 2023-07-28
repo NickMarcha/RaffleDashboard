@@ -4,9 +4,10 @@ import LogoutButton from "../components/LogoutButton";
 import { isLoggedIn } from "../raffleApi";
 import "./Layout.css";
 import TedYee from "../assets/images/tedYee.png";
+import React from "react";
 
 const Layout = () => {
-  function sendToClip(str) {
+  function sendToClip(str: string) {
     if (typeof navigator.clipboard == "undefined") {
       console.log("navigator.clipboard");
       var textArea = document.createElement("textarea");
@@ -21,7 +22,7 @@ const Layout = () => {
         var msg = successful ? "successful" : "unsuccessful";
         console.log(msg);
       } catch (err) {
-        console.warning("Was not possible to copy te text: ", err);
+        console.warn("Was not possible to copy te text: ", err);
       }
 
       document.body.removeChild(textArea);
@@ -32,7 +33,7 @@ const Layout = () => {
         console.info(`successful!`);
       },
       function (err) {
-        console.warning("unsuccessful!", err);
+        console.warn("unsuccessful!", err);
       }
     );
   }
@@ -55,9 +56,7 @@ const Layout = () => {
               <li>
                 <Link to="/history">History</Link>
               </li>
-              <li>
-                <LogoutButton>LogoutButton</LogoutButton>
-              </li>
+              <li>{/*<LogoutButton>LogoutButton</LogoutButton>*/}</li>
             </ul>
           </div>
         )}

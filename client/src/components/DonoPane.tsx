@@ -1,10 +1,21 @@
 import React from "react";
 import "./DonoPane.css";
-import { renderClickableMessage } from "../util/util";
+import RenderClickableMessage from "../util/util";
+import { Dono } from "../types/DataTypes";
 
-const DonoPane = ({ sponsor, date, location, amount, message, timeStamp }) => {
+const DonoPane: React.FC<Dono> = ({
+  sponsor,
+  date,
+  location,
+  amount,
+  message,
+  timeStamp,
+}) => {
   // Format the timestamp
-  const formattedTimeStamp = new Date(timeStamp).toLocaleString();
+  let formattedTimeStamp = "";
+  if (timeStamp !== undefined) {
+    formattedTimeStamp = new Date(timeStamp).toLocaleString();
+  }
 
   return (
     <div className="dono-pane">
@@ -38,7 +49,7 @@ const DonoPane = ({ sponsor, date, location, amount, message, timeStamp }) => {
         )}
       </div>
       <div className="dono-pane-right">
-        {message !== undefined && renderClickableMessage(message)}
+        {message !== undefined && <RenderClickableMessage message={message} />}
       </div>
     </div>
   );

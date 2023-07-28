@@ -4,9 +4,10 @@ import { fetchOverallTotals, isLoggedIn } from "../raffleApi";
 import { useEffect, useState } from "react";
 
 import "./RafflePane.css";
+import React from "react";
 
 const RafflePane = () => {
-  const [data, setData] = useState({ donoTotal: 0 });
+  const [data, setData] = useState<any>({ donoTotal: 0 });
 
   useEffect(() => {
     async function setFetchData() {

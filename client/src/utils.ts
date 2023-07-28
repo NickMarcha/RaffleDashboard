@@ -1,4 +1,4 @@
-export function fromSerialDate(serialDate) {
+export function fromSerialDate(serialDate: number) {
   const epoch = new Date(1899, 11, 30);
   const daysSinceEpoch = serialDate;
   const dateInMilliseconds =
@@ -15,7 +15,7 @@ export function fromSerialDate(serialDate) {
 }
 
 // Helper function to convert month numbers to names
-function getMonthName(monthNumber) {
+function getMonthName(monthNumber: number) {
   const months = [
     "Jan",
     "Feb",

@@ -6,6 +6,7 @@ import Raffle from "./pages/Raffle";
 import NoPage from "./pages/NoPage";
 import History from "./pages/History";
 import { useEffect } from "react";
+import React from "react";
 
 function App() {
   useEffect(() => {

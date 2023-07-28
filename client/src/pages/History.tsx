@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import DonoPane from "../components/DonoPane";
 import { fetchSortedByRaffleTime } from "../raffleApi";
 import "./History.css";
+import { Dono } from "../types/DataTypes";
 const History = () => {
-  const [donos, setDonos] = useState([]);
+  const [donos, setDonos] = useState<Dono[]>([]);
 
   useEffect(() => {
     async function setFetchData() {

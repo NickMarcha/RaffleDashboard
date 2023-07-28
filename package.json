@@ -6,8 +6,8 @@
   "scripts": {
     "start": "concurrently \"cd server && npm start\"  \"cd client && npm start\"",
     "build": "cd client && npm run build",
-    "serve": "concurrently \"cd server && npm run start\"  \"cd client && npm run serve\"",
-    "startb": "concurrently \"cd server && npm run start\"  \"cd client && npm run bs\"",
+    "serve": "concurrently \"cd server && npm run startprod\"  \"cd client && npm run serve\"",
+    "startb": "concurrently \"cd server && npm run startprod\"  \"cd client && npm run bs\"",
     "installAll": "npm install && cd client && npm install && cd .. && cd server && npm install"
   },
   "author": "NickMarcha",

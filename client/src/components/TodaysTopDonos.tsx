@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { latestDono } from "../raffleApi";
+import { fetchTodaysTopDono } from "../raffleApi";
 import DonoPane from "./DonoPane";
-const LatestDono = () => {
-  const [data, setData] = useState([]);
+import { Dono, emptyDono } from "../types/DataTypes";
+
+const TopDonos = () => {
+  const [data, setData] = useState<Dono>(emptyDono);
 
   useEffect(() => {
     async function setFetchData() {
-      const result = await latestDono();
+      const result = await fetchTodaysTopDono();
       setData(result);
     }
     setFetchData();
@@ -20,10 +22,10 @@ const LatestDono = () => {
 
   return (
     <div>
-      <h2>Latest Dono</h2>
+      <h2>Todays Top Dono</h2>
       <DonoPane {...data} />
     </div>
   );
 };
 
-export default LatestDono;
+export default TopDonos;

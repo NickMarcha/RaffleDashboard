@@ -4,6 +4,7 @@ import TodaysTopDono from "../components/TodaysTopDonos";
 import TodaysTotals from "../components/TodaysTotals";
 import DonoSiteIframe from "../components/DonoSiteIframe";
 import "./Raffle.css";
+import React from "react";
 
 const Raffle = () => {
   return (
