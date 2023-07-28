@@ -52,20 +52,16 @@ const limiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 
-/*
-app.get("/", function (req, res) {
-  res.sendFile("<file-name>", { root: __dirname });
-});
-*/
-const job = schedule.scheduleJob("*/15 * * * *", () => {
+const scrapeJob = () => {
   try {
-    logger.info("Current time:", new Date());
+    logger.info("Current time: " + new Date());
     logger.info("Running Scrape Job");
-    APIEndPoint.fetchData();
+    fetchScrapeJob();
   } catch (error) {
     logger.error(error);
   }
-});
+};
+const job = schedule.scheduleJob("*/15 * * * *", scrapeJob);
 
 app.post("/api/login", limiter, async (request, response) => {
   try {
