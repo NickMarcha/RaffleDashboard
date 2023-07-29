@@ -1,6 +1,6 @@
 ////////////////////////////// Sheet Coordinates //////////////////////////////
 // Function to convert a string to a number
-export function base25stringToNumber(str) {
+export function base25stringToNumber(str: string) {
   str = str.toUpperCase(); // Convert to uppercase for consistency
   let result = 0;
 
@@ -13,7 +13,7 @@ export function base25stringToNumber(str) {
 }
 
 // Function to convert a number to a string
-export function numberToBase25String(num) {
+export function numberToBase25String(num: number) {
   let result = "";
 
   while (num >= 0) {
@@ -29,7 +29,7 @@ export function numberToBase25String(num) {
 
 ////////////////////////////// Date Conversion //////////////////////////////
 
-export function fromSerialDate(serialDate) {
+export function fromSerialDate(serialDate: number) {
   const epoch = new Date(1899, 11, 30);
   const daysSinceEpoch = serialDate;
   const dateInMilliseconds =
@@ -46,7 +46,7 @@ export function fromSerialDate(serialDate) {
 }
 
 // Helper function to convert month numbers to names
-export function getMonthName(monthNumber) {
+export function getMonthName(monthNumber: number) {
   const months = [
     "Jan",
     "Feb",
@@ -65,7 +65,7 @@ export function getMonthName(monthNumber) {
   return months[monthNumber];
 }
 
-export function toSerialDate(dateString) {
+export function toSerialDate(dateString: string) {
   //console.log(`Converting date: ${dateString}`);
   const parts = dateString.split(" ");
   const day = parseInt(parts[0], 10);
@@ -75,7 +75,9 @@ export function toSerialDate(dateString) {
   const date = new Date(year, month, day);
   const epoch = new Date(1899, 11, 30);
 
-  const daysSinceEpoch = Math.floor((date - epoch) / (24 * 60 * 60 * 1000));
+  const daysSinceEpoch = Math.floor(
+    (date.getTime() - epoch.getTime()) / (24 * 60 * 60 * 1000)
+  );
   const googleSheetsDate = daysSinceEpoch;
 
   //console.log(`Converted date: ${googleSheetsDate}`);
@@ -83,7 +85,7 @@ export function toSerialDate(dateString) {
 }
 
 // Helper function to convert month names to numbers
-function getMonthNumber(monthName) {
+function getMonthNumber(monthName: string) {
   const months = [
     "Jan",
     "Feb",

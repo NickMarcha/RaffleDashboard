@@ -1,16 +1,16 @@
 import express from "express";
 import schedule from "node-schedule";
-import { fetchScrapeJob } from "./scrapejob.js";
+import { fetchScrapeJob } from "./scrapejob";
 import bodyParser from "body-parser";
 import jwt from "jsonwebtoken";
-import auth from "./auth.js";
+import { auth } from "./auth";
 import rateLimit from "express-rate-limit";
-import cors from "cors";
-import logger from "./logger.js";
-import APIEndPoint from "./APIEndpointFunctions.js";
+import cors, { CorsOptions } from "cors";
+import logger from "./logger";
+import APIEndPoint from "./APIEndpointFunctions";
 
 const app = express();
-const normalizePort = (val) => {
+const normalizePort = (val: string) => {
   const port = parseInt(val, 10);
 
   if (isNaN(port)) {
@@ -22,7 +22,7 @@ const normalizePort = (val) => {
   return false;
 };
 
-const port = normalizePort(process.env.PORT || 3001);
+const port = normalizePort(process.env.PORT || "3001");
 app.set("port", port);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -40,8 +40,12 @@ app.use((req, res, next) => {
   );
   next();
 });
-const corsOptions = {
-  origin: ["http://localhost/", process.env.HOST_URL, process.env.DOMAIN_NAME],
+const corsOptions: CorsOptions = {
+  origin: [
+    "http://localhost/",
+    process.env.HOST_URL as string,
+    process.env.DOMAIN_NAME as string,
+  ],
 };
 app.use(cors(corsOptions));
 
@@ -83,7 +87,7 @@ app.post("/api/login", limiter, async (request, response) => {
           accessCode: reqaccessCode,
           alias: result.alias,
         },
-        process.env.JWT_SECRET,
+        process.env.JWT_SECRET as string,
         { expiresIn: "24h" }
       );
 
@@ -197,7 +201,7 @@ app.get("/api/rollRaffle", auth, async (req, res) => {
     logger.info(`Max: ${max}`);
     const random = Math.floor(Math.random() * max);
 
-    let winner;
+    let winner: number | undefined = undefined;
 
     logger.info(`Random: ${random}`);
     for (let i = 0; i < validRaffleEntries.length; i++) {
@@ -207,9 +211,13 @@ app.get("/api/rollRaffle", auth, async (req, res) => {
       }
     }
 
-    let winnerID = validRaffleEntries[winner].index;
+    if (winner === undefined) {
+      throw new Error("Winner went to shit");
+    }
 
-    let winnerData = await APIEndPoint.fetchEntryByID(winnerID);
+    let winnerID: number = validRaffleEntries[winner].index;
+
+    let winnerData = await APIEndPoint.fetchEntryByID(winnerID, true);
 
     res.json(winnerData);
 
@@ -231,7 +239,7 @@ app.get("/api/rollRaffleNW", auth, async (req, res) => {
     logger.info(`Max: ${max}`);
     const random = Math.floor(Math.random() * max);
 
-    let winner;
+    let winner: number | undefined = undefined;
 
     logger.info(`Random: ${random}`);
     for (let i = 0; i < validRaffleEntries.length; i++) {
@@ -241,9 +249,13 @@ app.get("/api/rollRaffleNW", auth, async (req, res) => {
       }
     }
 
+    if (winner === undefined) {
+      throw new Error("Winner went to shit");
+    }
+
     let winnerID = validRaffleEntries[winner].index;
 
-    let winnerData = await APIEndPoint.fetchEntryByID(winnerID);
+    let winnerData = await APIEndPoint.fetchEntryByID(winnerID, true);
 
     res.json(winnerData);
   } catch (error) {
@@ -330,7 +342,7 @@ app.post("/api/rollRaffles", auth, async (req, res) => {
 
     logger.info(`Max: ${max}`);
 
-    let winners = [];
+    let winners: number[] = [];
     while (winners.length < amount) {
       const random = Math.floor(Math.random() * max);
       logger.info(`Random: ${random}`);
@@ -345,7 +357,7 @@ app.post("/api/rollRaffles", auth, async (req, res) => {
     let winnerIDs = winners.map((winner) => validRaffleEntries[winner].index);
 
     let fetches = winnerIDs.map((winnerID) =>
-      APIEndPoint.fetchEntryByID(winnerID)
+      APIEndPoint.fetchEntryByID(winnerID, true)
     );
 
     Promise.all(fetches).then((values) => {
@@ -364,3 +376,6 @@ app.use((req, res, next) => {
 app.listen(port, () => {
   logger.info(`Now listening on port ${port}`);
 });
+function typeOf(winner: number | undefined) {
+  throw new Error("Function not implemented.");
+}

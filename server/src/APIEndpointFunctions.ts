@@ -1,12 +1,15 @@
 import { JWT } from "google-auth-library";
-import { GoogleSpreadsheet } from "google-spreadsheet";
+import {
+  GoogleSpreadsheet,
+  GoogleSpreadsheetWorksheet,
+} from "google-spreadsheet";
 import {
   base25stringToNumber,
   numberToBase25String,
   fromSerialDate,
   toSerialDate,
-} from "./utils.js";
-import logger from "./logger.js";
+} from "./utils";
+import logger from "./logger";
 
 import "dotenv/config";
 const SCOPES = [
@@ -20,10 +23,13 @@ const jwtFromEnv = new JWT({
   scopes: SCOPES,
 });
 
-const doc = new GoogleSpreadsheet(process.env.SHEETS_DB_ID, jwtFromEnv);
+const doc = new GoogleSpreadsheet(
+  process.env.SHEETS_DB_ID as string,
+  jwtFromEnv
+);
 
 const accessCodeDoc = new GoogleSpreadsheet(
-  process.env.SHEETS_AUTHDB_ID,
+  process.env.SHEETS_AUTHDB_ID as string,
   jwtFromEnv
 );
 
@@ -67,13 +73,13 @@ const latest50Range = "B29:F78";
 
 async function fetchTotal() {
   let result = await APIfetch(fetchRange, APICallsSheet, true);
-  result = {
+  const resul = {
     donoCount: result[0][0],
     donoTotal: result[1][0],
     raffleTotal: result[2][0],
     raffleDonoCount: result[3][0],
   };
-  return result;
+  return resul;
 }
 
 async function fetchTop() {
@@ -82,7 +88,7 @@ async function fetchTop() {
   for (let i = 0; i < result[0].length && result[0][i] != null; i++) {
     data.push({
       sponsor: result[0][i],
-      date: fromSerialDate(result[1][i]),
+      date: fromSerialDate(result[1][i] as number),
       location: result[2][i],
       amount: result[3][i],
       message: result[4][i],
@@ -102,7 +108,7 @@ async function fetchLatest() {
   let data = {
     isActive: result[0][0],
     sponsor: result[1][0],
-    date: fromSerialDate(result[2][0]),
+    date: fromSerialDate(result[2][0] as number),
     location: result[3][0],
     amount: result[4][0],
     message: result[5][0],
@@ -114,7 +120,7 @@ async function fetchTodaysTop() {
   let result = await APIfetch(todaysTopRange, APICallsSheet, true);
   let data = {
     sponsor: result[0][0],
-    date: fromSerialDate(result[1][0]),
+    date: fromSerialDate(result[1][0] as number),
     location: result[2][0],
     amount: result[3][0],
     message: result[4][0],
@@ -132,7 +138,11 @@ async function fetchTodaysTotal() {
   return data;
 }
 
-async function APIfetch(range, sheet, lazy) {
+async function APIfetch(
+  range: string,
+  sheet: GoogleSpreadsheetWorksheet,
+  lazy: boolean
+) {
   const patt1 = /[0-9]/g;
   const patt2 = /[a-zA-Z]/g;
 
@@ -143,10 +153,15 @@ async function APIfetch(range, sheet, lazy) {
     logger.info("Lazy");
   }
   let [left, right] = range.split(":");
+  let leftNumStr = left.match(patt1);
+  let rightNumStr = right.match(patt1);
+  if (leftNumStr == null || rightNumStr == null) {
+    throw new Error("No Num Str");
+  }
 
-  let leftNum = parseInt(left.match(patt1).join(""));
+  let leftNum = parseInt(leftNumStr.join(""));
   let leftAlpha = "" + left.match(patt2);
-  let rightNum = parseInt(right.match(patt1).join(""));
+  let rightNum = parseInt(rightNumStr.join(""));
   let rightAlpha = "" + right.match(patt2);
 
   let result = [];
@@ -189,14 +204,15 @@ async function fetchValidRaffleEntries() {
 
   while (proccessedSheet.getCellByA1(`B${i}`).value !== null) {
     if (proccessedSheet.getCellByA1(`A${i}`).value === false) {
-      let prevSum =
+      let prevSum: number =
         validRaffleEntries.length > 0
           ? validRaffleEntries[validRaffleEntries.length - 1].rollingSum
           : 0;
 
       validRaffleEntries.push({
         index: i,
-        rollingSum: proccessedSheet.getCellByA1(`E${i}`).value + prevSum,
+        rollingSum:
+          (proccessedSheet.getCellByA1(`E${i}`).value as number) + prevSum,
       });
     }
     i++;
@@ -207,7 +223,7 @@ async function fetchValidRaffleEntries() {
   return validRaffleEntries;
 }
 
-async function fetchEntryByID(entryID, lazy) {
+async function fetchEntryByID(entryID: number, lazy: boolean) {
   if (!lazy) await proccessedSheet.loadCells(`A${entryID}:J${entryID}`);
   const hasbeenplayedcell = proccessedSheet.getCellByA1(`A${entryID}`);
   const hasbeenplayed = hasbeenplayedcell.value;
@@ -228,7 +244,7 @@ async function fetchEntryByID(entryID, lazy) {
   return entryData;
 }
 
-async function setEntryToPlayed(entryID, updatedBy) {
+async function setEntryToPlayed(entryID: number, updatedBy: string) {
   await proccessedSheet.loadCells(`A${entryID}:J${entryID}`);
   const hasbeenplayedcell = proccessedSheet.getCellByA1(`A${entryID}`);
   const lastUpdatedCell = proccessedSheet.getCellByA1(`I${entryID}`);
@@ -240,7 +256,7 @@ async function setEntryToPlayed(entryID, updatedBy) {
   await proccessedSheet.saveUpdatedCells();
 }
 
-async function setEntryTimeStamp(entryID, updatedBy) {
+async function setEntryTimeStamp(entryID: number, updatedBy: string) {
   try {
     await proccessedSheet.loadCells(`I${entryID}:J${entryID}`);
     const lastUpdatedCell = proccessedSheet.getCellByA1(`I${entryID}`);
@@ -260,7 +276,7 @@ async function fetchLatest50() {
   for (let i = 0; i < result[0].length && result[0][i] != null; i++) {
     data.push({
       sponsor: result[0][i],
-      date: fromSerialDate(result[1][i]),
+      date: fromSerialDate(result[1][i] as number),
       location: result[2][i],
       amount: result[3][i],
       message: result[4][i],
@@ -271,7 +287,7 @@ async function fetchLatest50() {
   return data;
 }
 
-async function fetchEntriesSortedByRaffleTime(lazy) {
+async function fetchEntriesSortedByRaffleTime(lazy: boolean) {
   if (!lazy) {
     logger.info("Not Lazy");
     await sortByRaffleTime.loadCells();
@@ -284,7 +300,9 @@ async function fetchEntriesSortedByRaffleTime(lazy) {
   while (sortByRaffleTime.getCellByA1(`A${i}`).value !== null) {
     raffleEntries.push({
       sponsor: sortByRaffleTime.getCellByA1(`A${i}`).value,
-      date: fromSerialDate(sortByRaffleTime.getCellByA1(`B${i}`).value),
+      date: fromSerialDate(
+        sortByRaffleTime.getCellByA1(`B${i}`).value as number
+      ),
       location: sortByRaffleTime.getCellByA1(`C${i}`).value,
       amount: sortByRaffleTime.getCellByA1(`D${i}`).value,
       message: sortByRaffleTime.getCellByA1(`E${i}`).value,
@@ -297,13 +315,13 @@ async function fetchEntriesSortedByRaffleTime(lazy) {
   return raffleEntries;
 }
 
-async function getAllRaffleEntries(donoPattern) {
+async function getAllRaffleEntries(donoPattern: any) {
   let validRaffleEntries = [];
   let i = 2;
 
   while (proccessedSheet.getCellByA1(`B${i}`).value !== null) {
     if (proccessedSheet.getCellByA1(`A${i}`).value === false) {
-      let obj = {};
+      let obj: any = {};
       if (donoPattern.entryID) {
         obj.entryID = i;
       }
@@ -331,7 +349,11 @@ async function getAllRaffleEntries(donoPattern) {
   return validRaffleEntries;
 }
 
-async function updateLatest(scrapedEntries, scrapedTotalDonos, lazy) {
+async function updateLatest(
+  scrapedEntries: any[],
+  scrapedTotalDonos: number,
+  lazy: boolean
+) {
   let start = scrapedTotalDonos - scrapedEntries.length + 2;
   if (!lazy)
     await rawDataSheet.loadCells(`A${start}:I${scrapedTotalDonos + 1}`);

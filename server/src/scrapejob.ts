@@ -30,8 +30,8 @@ export async function fetchScrapeJob() {
         .split(" ")
         .filter((str) => str !== "")[5];
 
-      let dataOne = [];
-      let dataTwo = [];
+      let dataOne: any[] = [];
+      let dataTwo: any[] = [];
 
       let rows = $(`${tableSelector} ${rowSelectorOne}`);
       rows.each((index, element) => {
@@ -54,9 +54,12 @@ export async function fetchScrapeJob() {
       });
       logger.info(`Scraped ${dataOne.length + dataTwo.length} rows`);
 
-      const zipped = dataOne.map((value, index) => [value, dataTwo[index]]);
-      const scrapedEntries = [].concat(...zipped).map((entry) => {
-        const split = (nstr) => {
+      const zipped: any = dataOne.map((value, index) => [
+        value,
+        dataTwo[index],
+      ]);
+      const scrapedEntries = [].concat(...zipped).map((entry: string[]) => {
+        const split = (nstr: string) => {
           let l = nstr.length / 2;
           return {
             one: nstr.substring(0, l),
@@ -102,7 +105,7 @@ export async function fetchScrapeJob() {
         }
       });
 
-      await APIEndPoint.updateLatest(scrapedEntries, scrapedTotalDonos);
+      await APIEndPoint.updateLatest(scrapedEntries, scrapedTotalDonos, true);
     })
     .catch((error) => {
       logger.error(error);
