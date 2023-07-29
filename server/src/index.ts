@@ -21,6 +21,7 @@ const normalizePort = (val: string) => {
   }
   return false;
 };
+APIEndPoint.instantiate();
 
 const port = normalizePort(process.env.PORT || "3001");
 app.set("port", port);
@@ -58,6 +59,7 @@ const limiter = rateLimit({
 
 const scrapeJob = () => {
   try {
+    if (APIEndPoint.instantiated === false) return;
     logger.info("Current time: " + new Date());
     logger.info("Running Scrape Job");
     fetchScrapeJob();
@@ -376,6 +378,3 @@ app.use((req, res, next) => {
 app.listen(port, () => {
   logger.info(`Now listening on port ${port}`);
 });
-function typeOf(winner: number | undefined) {
-  throw new Error("Function not implemented.");
-}

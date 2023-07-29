@@ -33,26 +33,17 @@ const accessCodeDoc = new GoogleSpreadsheet(
   jwtFromEnv
 );
 
-await accessCodeDoc.loadInfo();
-await doc.loadInfo(); // loads document properties and worksheets
-logger.info(doc.title);
+let APICallsSheet: GoogleSpreadsheetWorksheet;
 
-const APICallsSheet = doc.sheetsByTitle["APICalls"];
-logger.info(APICallsSheet.title);
+let accessCodeSheet: GoogleSpreadsheetWorksheet;
 
-const accessCodeSheet = accessCodeDoc.sheetsByTitle["AccessCode"];
-logger.info(accessCodeDoc.title);
+let proccessedSheet: GoogleSpreadsheetWorksheet;
 
-const proccessedSheet = doc.sheetsByTitle["Proccessed"];
-logger.info(proccessedSheet.title);
+let sortByRaffleTime: GoogleSpreadsheetWorksheet;
 
-const sortByRaffleTime = doc.sheetsByTitle["SortByRaffleTime"];
-logger.info(sortByRaffleTime.title);
+let rawDataSheet: GoogleSpreadsheetWorksheet;
 
-const rawDataSheet = doc.sheetsByTitle["Raw Data"];
-logger.info(rawDataSheet.title);
-
-const loadAllSheets = () => {
+const loadAllSheets = async () => {
   APICallsSheet.loadCells();
   accessCodeSheet.loadCells();
   proccessedSheet.loadCells();
@@ -60,7 +51,30 @@ const loadAllSheets = () => {
   rawDataSheet.loadCells();
   logger.info("Loaded All Sheets");
 };
-await loadAllSheets();
+
+let instantiated = false;
+const instantiate = async () => {
+  await accessCodeDoc.loadInfo();
+  await doc.loadInfo(); // loads document properties and worksheets
+  logger.info(doc.title);
+
+  APICallsSheet = doc.sheetsByTitle["APICalls"];
+  logger.info(APICallsSheet.title);
+
+  accessCodeSheet = accessCodeDoc.sheetsByTitle["AccessCode"];
+  logger.info(accessCodeDoc.title);
+
+  proccessedSheet = doc.sheetsByTitle["Proccessed"];
+  logger.info(proccessedSheet.title);
+
+  sortByRaffleTime = doc.sheetsByTitle["SortByRaffleTime"];
+  logger.info(sortByRaffleTime.title);
+
+  rawDataSheet = doc.sheetsByTitle["Raw Data"];
+  logger.info(rawDataSheet.title);
+  await loadAllSheets();
+  instantiated = true;
+};
 
 const fetchRange = "A2:D2";
 const topRange = "A5:E8";
@@ -404,5 +418,7 @@ const APIEndPoint = {
   setEntryTimeStamp,
   updateLatest,
   getAllRaffleEntries,
+  instantiate,
+  instantiated,
 };
 export default APIEndPoint;
