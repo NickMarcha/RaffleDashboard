@@ -105,7 +105,10 @@ function getAuthHeaderJSONPayload() {
   };
 }
 
-export async function removeFromRaffle(id: string | undefined) {
+export async function removeFromRaffle(
+  id: string | undefined,
+  lazy: boolean = false
+) {
   if (id === undefined) {
     console.error("ID is undefined");
     return;
@@ -113,7 +116,7 @@ export async function removeFromRaffle(id: string | undefined) {
   try {
     const response = await raffleClient.post(
       "/setEntryToPlayed",
-      { entryID: id },
+      { entryID: id, lazy },
       { headers: getAuthHeaderJSONPayload() }
     );
 
@@ -195,6 +198,20 @@ export async function getAllRaffleEntries(donoB: any) {
       });
   } catch (error) {
     console.error("Error fetching data:", error);
+  }
+}
+
+export async function saveUpdated() {
+  try {
+    return await raffleClient
+      .get("/saveUpdated", {
+        headers: getAuthHeader(),
+      })
+      .then((response) => {
+        return response.data;
+      });
+  } catch (error) {
+    console.error("Error saving updated data:", error);
   }
 }
 

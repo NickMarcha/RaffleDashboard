@@ -59,11 +59,13 @@ const limiter = rateLimit({
 
 const scrapeJob = () => {
   try {
-    if (APIEndPoint.instantiated === false) return;
+    console.log("Scrape Job " + APIEndPoint.getInstantiated());
+    if (APIEndPoint.getInstantiated() === false) return;
     logger.info("Current time: " + new Date());
     logger.info("Running Scrape Job");
     fetchScrapeJob();
   } catch (error) {
+    console.log("scrapeJob error");
     logger.error(error);
   }
 };
@@ -229,7 +231,7 @@ app.get("/api/rollRaffle", auth, async (req, res) => {
     await APIEndPoint.setEntryTimeStamp(winnerID, req.alias, true);
     logger.info("Fetched winner " + new Date().toLocaleString());
     res.json(winnerData);
-    APIEndPoint.saveUpdated();
+    await APIEndPoint.saveUpdated();
   } catch (error) {
     logger.error(error);
     res.json(error);
@@ -275,12 +277,30 @@ app.get("/api/rollRaffleNW", auth, async (req, res) => {
 app.post("/api/setEntryToPlayed", auth, async (request, response) => {
   try {
     const entryID = request.body.entryID;
+    const lazy = request.body.lazy;
 
     await APIEndPoint.setEntryToPlayed(entryID, request.alias, true);
     response.status(200).send({
       message: "Updated Entry",
     });
+    if (!lazy) {
+      logger.info("Set entry to played force");
+      APIEndPoint.saveUpdated();
+    }
+  } catch (error) {
+    logger.error(error);
+    response.status(404).send({
+      message: "Something went wrong",
+    });
+  }
+});
+
+app.get("/api/saveUpdated", auth, async (request, response) => {
+  try {
     APIEndPoint.saveUpdated();
+    response.status(200).send({
+      message: "Updated Entry",
+    });
   } catch (error) {
     logger.error(error);
     response.status(404).send({

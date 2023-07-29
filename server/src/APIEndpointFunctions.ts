@@ -46,6 +46,7 @@ let wasUpdated = {
   rawData: false,
 };
 async function saveUpdated() {
+  logger.info(JSON.stringify(wasUpdated));
   if (wasUpdated.APICalls) {
     await APICallsSheet.saveUpdatedCells();
     wasUpdated.APICalls = false;
@@ -66,6 +67,7 @@ async function saveUpdated() {
     await rawDataSheet.saveUpdatedCells();
     wasUpdated.rawData = false;
   }
+  logger.info("Saved Updated Cells");
 }
 
 const loadAllSheets = async () => {
@@ -82,6 +84,9 @@ const loadAllSheets = async () => {
 };
 
 let instantiated = false;
+const getInstantiated = () => {
+  return instantiated;
+};
 const instantiate = async () => {
   await accessCodeDoc.loadInfo();
   await doc.loadInfo(); // loads document properties and worksheets
@@ -297,9 +302,7 @@ async function setEntryToPlayed(
 
   lastUpdatedCell.value = new Date(Date.now()).toISOString();
   updatedByCell.value = updatedBy;
-
   wasUpdated.proccessed = true;
-  //proccessedSheet.saveUpdatedCells();
 }
 
 async function setEntryTimeStamp(
@@ -316,7 +319,8 @@ async function setEntryTimeStamp(
 
     lastUpdatedCell.value = new Date(Date.now()).toISOString();
     updatedByCell.value = updatedBy;
-    //await proccessedSheet.saveUpdatedCells();
+    wasUpdated.proccessed = true;
+    return;
   } catch (error) {
     logger.error(error);
   }
@@ -457,7 +461,7 @@ const APIEndPoint = {
   updateLatest,
   getAllRaffleEntries,
   instantiate,
-  instantiated,
+  getInstantiated,
   saveUpdated,
 };
 export default APIEndPoint;

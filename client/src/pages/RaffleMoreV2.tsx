@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import { Dono } from "../types/DataTypes";
 import RaffleMoreCardV2 from "../components/RaffleMoreCardV2";
-import { removeFromRaffle, rollRaffleMore } from "../raffleApi";
+import { removeFromRaffle, rollRaffleMore, saveUpdated } from "../raffleApi";
 import useArray from "../hooks/useArray";
 import StrawPollAPI, { ResultEntry } from "../util/StrawPollAPI";
 import { RenderClickableMessage, sendToClip } from "../util/util";
@@ -81,10 +81,11 @@ const RaffleMoreV2 = () => {
     let ps = [];
     for (let i = 0; i < toggleArray.length; i++) {
       if (toggleArray[i]) {
-        ps.push(removeFromRaffle(donos[i].entryID));
+        ps.push(removeFromRaffle(donos[i].entryID, true));
       }
     }
     await Promise.all(ps);
+    await saveUpdated();
 
     const result = await rollRaffleMore(raffleAmount);
     for (let i = 0; i < toggleArray.length; i++) {
@@ -93,6 +94,7 @@ const RaffleMoreV2 = () => {
       }
       updateToggle(i, false);
     }
+
     setRemovingEntries(false);
   }
 
