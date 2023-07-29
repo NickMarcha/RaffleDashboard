@@ -36,7 +36,7 @@ const RaffleMoreCardV2: React.FC<RMProps> = ({
           name="bordered-checkbox"
           disabled={disabled}
           onChange={(event) => {
-            event.preventDefault();
+            //event.preventDefault();
             setToggleState(event.target.checked);
           }}
           className="w-10 h-10 accent-red text-red-100 bg-gray-100 border-gray-300 rounded focus:ring-red-500"

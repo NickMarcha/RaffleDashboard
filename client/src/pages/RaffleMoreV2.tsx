@@ -77,6 +77,15 @@ const RaffleMoreV2 = () => {
   async function RemoveRaffleEntries() {
     setRemovingEntries(true);
     let c = countToggles();
+
+    let ps = [];
+    for (let i = 0; i < toggleArray.length; i++) {
+      if (toggleArray[i]) {
+        ps.push(removeFromRaffle(donos[i].entryID));
+      }
+    }
+    await Promise.all(ps);
+
     const result = await rollRaffleMore(raffleAmount);
     for (let i = 0; i < toggleArray.length; i++) {
       if (toggleArray[i]) {
