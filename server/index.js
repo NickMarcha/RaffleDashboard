@@ -302,7 +302,7 @@ app.get("/api/latestfifty", async (req, res) => {
 
 app.get("/api/sortedByRaffleTime", async (req, res) => {
   try {
-    res.json(await APIEndPoint.fetchEntriesSortedByRaffleTime());
+    res.json(await APIEndPoint.fetchEntriesSortedByRaffleTime(true));
     logger.info("sortedByRaffleTime");
   } catch (error) {
     logger.info(error);

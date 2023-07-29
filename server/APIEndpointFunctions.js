@@ -30,13 +30,31 @@ const accessCodeDoc = new GoogleSpreadsheet(
 await accessCodeDoc.loadInfo();
 await doc.loadInfo(); // loads document properties and worksheets
 logger.info(doc.title);
-logger.info(accessCodeDoc.title);
 
 const APICallsSheet = doc.sheetsByTitle["APICalls"];
+logger.info(APICallsSheet.title);
 
 const accessCodeSheet = accessCodeDoc.sheetsByTitle["AccessCode"];
+logger.info(accessCodeDoc.title);
 
-logger.info(APICallsSheet.title);
+const proccessedSheet = doc.sheetsByTitle["Proccessed"];
+logger.info(proccessedSheet.title);
+
+const sortByRaffleTime = doc.sheetsByTitle["SortByRaffleTime"];
+logger.info(sortByRaffleTime.title);
+
+const rawDataSheet = doc.sheetsByTitle["Raw Data"];
+logger.info(rawDataSheet.title);
+
+const loadAllSheets = () => {
+  APICallsSheet.loadCells();
+  accessCodeSheet.loadCells();
+  proccessedSheet.loadCells();
+  sortByRaffleTime.loadCells();
+  rawDataSheet.loadCells();
+  logger.info("Loaded All Sheets");
+};
+await loadAllSheets();
 
 const fetchRange = "A2:D2";
 const topRange = "A5:E8";
@@ -44,9 +62,11 @@ const yeeAndPepeRange = "A10:A12";
 const latestRange = "A15:F15";
 const todaysTopRange = "A19:E19";
 const todaysTotalRange = "A24:A26";
+const accessCodeRange = "A2:D50";
+const latest50Range = "B29:F78";
 
 async function fetchTotal() {
-  let result = await APIfetch(fetchRange, APICallsSheet);
+  let result = await APIfetch(fetchRange, APICallsSheet, true);
   result = {
     donoCount: result[0][0],
     donoTotal: result[1][0],
@@ -57,7 +77,7 @@ async function fetchTotal() {
 }
 
 async function fetchTop() {
-  let result = await APIfetch(topRange, APICallsSheet);
+  let result = await APIfetch(topRange, APICallsSheet, true);
   let data = [];
   for (let i = 0; i < result[0].length && result[0][i] != null; i++) {
     data.push({
@@ -72,13 +92,13 @@ async function fetchTop() {
 }
 
 async function fetchYeeAndPepe() {
-  let result = await APIfetch(yeeAndPepeRange, APICallsSheet);
+  let result = await APIfetch(yeeAndPepeRange, APICallsSheet, true);
   let data = { yeeDonoTotal: result[0][0], pepeDonoTotal: result[0][1] };
   return data;
 }
 
 async function fetchLatest() {
-  let result = await APIfetch(latestRange, APICallsSheet);
+  let result = await APIfetch(latestRange, APICallsSheet, true);
   let data = {
     isActive: result[0][0],
     sponsor: result[1][0],
@@ -91,7 +111,7 @@ async function fetchLatest() {
 }
 
 async function fetchTodaysTop() {
-  let result = await APIfetch(todaysTopRange, APICallsSheet);
+  let result = await APIfetch(todaysTopRange, APICallsSheet, true);
   let data = {
     sponsor: result[0][0],
     date: fromSerialDate(result[1][0]),
@@ -103,7 +123,7 @@ async function fetchTodaysTop() {
 }
 
 async function fetchTodaysTotal() {
-  let result = await APIfetch(todaysTotalRange, APICallsSheet);
+  let result = await APIfetch(todaysTotalRange, APICallsSheet, true);
   let data = {
     yeeTotal: result[0][0],
     pepeTotal: result[0][1],
@@ -112,11 +132,16 @@ async function fetchTodaysTotal() {
   return data;
 }
 
-async function APIfetch(range, sheet) {
+async function APIfetch(range, sheet, lazy) {
   const patt1 = /[0-9]/g;
   const patt2 = /[a-zA-Z]/g;
 
-  await sheet.loadCells(range);
+  if (!lazy) {
+    logger.info("Not Lazy");
+    await sheet.loadCells(range);
+  } else {
+    logger.info("Lazy");
+  }
   let [left, right] = range.split(":");
 
   let leftNum = parseInt(left.match(patt1).join(""));
@@ -143,10 +168,8 @@ async function APIfetch(range, sheet) {
   return result;
 }
 
-const accessCodeRange = "A2:D50";
-
 async function fetchAccessCodes() {
-  let result = await APIfetch(accessCodeRange, accessCodeSheet);
+  let result = await APIfetch(accessCodeRange, accessCodeSheet, true);
   let data = [];
   for (let i = 0; i < result[0].length && result[0][i] != null; i++) {
     data.push({
@@ -158,10 +181,6 @@ async function fetchAccessCodes() {
   }
   return data;
 }
-
-const proccessedSheet = doc.sheetsByTitle["Proccessed"];
-
-logger.info(proccessedSheet.title);
 
 async function fetchValidRaffleEntries() {
   await proccessedSheet.loadCells();
@@ -188,8 +207,8 @@ async function fetchValidRaffleEntries() {
   return validRaffleEntries;
 }
 
-async function fetchEntryByID(entryID) {
-  await proccessedSheet.loadCells(`A${entryID}:J${entryID}`);
+async function fetchEntryByID(entryID, lazy) {
+  if (!lazy) await proccessedSheet.loadCells(`A${entryID}:J${entryID}`);
   const hasbeenplayedcell = proccessedSheet.getCellByA1(`A${entryID}`);
   const hasbeenplayed = hasbeenplayedcell.value;
   const sponsor = proccessedSheet.getCellByA1(`B${entryID}`).value;
@@ -235,10 +254,8 @@ async function setEntryTimeStamp(entryID, updatedBy) {
   }
 }
 
-const latest50Range = "B29:F78";
-
 async function fetchLatest50() {
-  let result = await APIfetch(latest50Range, APICallsSheet);
+  let result = await APIfetch(latest50Range, APICallsSheet, true);
   let data = [];
   for (let i = 0; i < result[0].length && result[0][i] != null; i++) {
     data.push({
@@ -254,12 +271,13 @@ async function fetchLatest50() {
   return data;
 }
 
-const sortByRaffleTime = doc.sheetsByTitle["SortByRaffleTime"];
-
-logger.info(sortByRaffleTime.title);
-
-async function fetchEntriesSortedByRaffleTime() {
-  await sortByRaffleTime.loadCells();
+async function fetchEntriesSortedByRaffleTime(lazy) {
+  if (!lazy) {
+    logger.info("Not Lazy");
+    await sortByRaffleTime.loadCells();
+  } else {
+    logger.info("Lazy");
+  }
   let i = 2;
   let raffleEntries = [];
 
@@ -279,12 +297,10 @@ async function fetchEntriesSortedByRaffleTime() {
   return raffleEntries;
 }
 
-const rawDataSheet = doc.sheetsByTitle["Raw Data"];
-logger.info(rawDataSheet.title);
-
-async function updateLatest(scrapedEntries, scrapedTotalDonos) {
+async function updateLatest(scrapedEntries, scrapedTotalDonos, lazy) {
   let start = scrapedTotalDonos - scrapedEntries.length + 2;
-  await rawDataSheet.loadCells(`A${start}:I${scrapedTotalDonos + 1}`);
+  if (!lazy)
+    await rawDataSheet.loadCells(`A${start}:I${scrapedTotalDonos + 1}`);
   logger.info(
     `Loaded cells in Spreadsheet from A${start}:I${scrapedTotalDonos + 1}`
   );
@@ -309,6 +325,7 @@ async function updateLatest(scrapedEntries, scrapedTotalDonos) {
     .saveUpdatedCells()
     .then(() => {
       logger.info("Cells updated");
+      loadAllSheets();
     })
     .catch((error) => {
       logger.error(error);
