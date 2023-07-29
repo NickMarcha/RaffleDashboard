@@ -105,7 +105,7 @@ export async function fetchScrapeJob() {
         }
       });
 
-      await APIEndPoint.updateLatest(scrapedEntries, scrapedTotalDonos, true);
+      await APIEndPoint.updateLatest(scrapedEntries, scrapedTotalDonos, false);
     })
     .catch((error) => {
       logger.error(error);

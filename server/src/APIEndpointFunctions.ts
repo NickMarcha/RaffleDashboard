@@ -44,11 +44,11 @@ let sortByRaffleTime: GoogleSpreadsheetWorksheet;
 let rawDataSheet: GoogleSpreadsheetWorksheet;
 
 const loadAllSheets = async () => {
-  APICallsSheet.loadCells();
-  accessCodeSheet.loadCells();
-  proccessedSheet.loadCells();
-  sortByRaffleTime.loadCells();
-  rawDataSheet.loadCells();
+  await APICallsSheet.loadCells();
+  await accessCodeSheet.loadCells();
+  await proccessedSheet.loadCells();
+  await sortByRaffleTime.loadCells();
+  await rawDataSheet.loadCells();
   logger.info("Loaded All Sheets");
 };
 
@@ -211,8 +211,11 @@ async function fetchAccessCodes() {
   return data;
 }
 
-async function fetchValidRaffleEntries() {
-  await proccessedSheet.loadCells();
+async function fetchValidRaffleEntries(lazy: boolean) {
+  if (!lazy) await proccessedSheet.loadCells();
+  console.log("test");
+  console.log(proccessedSheet.getCellByA1(`B${2}`).value);
+
   let validRaffleEntries = [];
   let i = 2;
 
@@ -234,6 +237,7 @@ async function fetchValidRaffleEntries() {
     //logger.info(proccessedSheet.getCellByA1(`B${i}`).value);
   }
 
+  console.log(validRaffleEntries.length);
   return validRaffleEntries;
 }
 
@@ -258,16 +262,23 @@ async function fetchEntryByID(entryID: number, lazy: boolean) {
   return entryData;
 }
 
-async function setEntryToPlayed(entryID: number, updatedBy: string) {
-  await proccessedSheet.loadCells(`A${entryID}:J${entryID}`);
+async function setEntryToPlayed(
+  entryID: number,
+  updatedBy: string,
+  lazy: boolean
+) {
+  if (!lazy) {
+    await proccessedSheet.loadCells(`A${entryID}:J${entryID}`);
+  }
   const hasbeenplayedcell = proccessedSheet.getCellByA1(`A${entryID}`);
   const lastUpdatedCell = proccessedSheet.getCellByA1(`I${entryID}`);
   const updatedByCell = proccessedSheet.getCellByA1(`J${entryID}`);
   hasbeenplayedcell.value = true;
+  //console.log(proccessedSheet.getCellByA1(`D${entryID}`).value);
 
   lastUpdatedCell.value = new Date(Date.now()).toISOString();
   updatedByCell.value = updatedBy;
-  await proccessedSheet.saveUpdatedCells();
+  proccessedSheet.saveUpdatedCells();
 }
 
 async function setEntryTimeStamp(entryID: number, updatedBy: string) {

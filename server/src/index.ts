@@ -195,7 +195,7 @@ app.get("/api/todaysTotal", async (req, res) => {
 
 app.get("/api/rollRaffle", auth, async (req, res) => {
   try {
-    let validRaffleEntries = await APIEndPoint.fetchValidRaffleEntries();
+    let validRaffleEntries = await APIEndPoint.fetchValidRaffleEntries(false);
     const min = validRaffleEntries[0].rollingSum;
     logger.info(`Min: ${min}`);
     const max = validRaffleEntries[validRaffleEntries.length - 1].rollingSum;
@@ -233,7 +233,7 @@ app.get("/api/rollRaffle", auth, async (req, res) => {
 /// Rolls raffle without Writing to db
 app.get("/api/rollRaffleNW", auth, async (req, res) => {
   try {
-    let validRaffleEntries = await APIEndPoint.fetchValidRaffleEntries();
+    let validRaffleEntries = await APIEndPoint.fetchValidRaffleEntries(true);
     const min = validRaffleEntries[0].rollingSum;
     logger.info(`Min: ${min}`);
     const max = validRaffleEntries[validRaffleEntries.length - 1].rollingSum;
@@ -269,7 +269,8 @@ app.get("/api/rollRaffleNW", auth, async (req, res) => {
 app.post("/api/setEntryToPlayed", auth, async (request, response) => {
   try {
     const entryID = request.body.entryID;
-    await APIEndPoint.setEntryToPlayed(entryID, request.alias);
+
+    await APIEndPoint.setEntryToPlayed(entryID, request.alias, true);
     response.status(200).send({
       message: "Updated Entry",
     });
@@ -337,7 +338,7 @@ app.get("/api/sortedByRaffleTime", async (req, res) => {
 app.post("/api/rollRaffles", auth, async (req, res) => {
   try {
     const amount = req.body.amount;
-    let validRaffleEntries = await APIEndPoint.fetchValidRaffleEntries();
+    let validRaffleEntries = await APIEndPoint.fetchValidRaffleEntries(false);
     const min = validRaffleEntries[0].rollingSum;
     logger.info(`Min: ${min}`);
     const max = validRaffleEntries[validRaffleEntries.length - 1].rollingSum;

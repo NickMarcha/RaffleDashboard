@@ -28,7 +28,8 @@ export async function auth(
     }
 
     // pass the user down to the endpoints here
-    request.alias = tokenObject;
+    //console.log("tokenObject ", tokenObject);
+    request.alias = tokenObject.alias;
 
     // pass down functionality to the endpoint
     next();

@@ -39,6 +39,10 @@ button {
   width: auto;
   height: auto;
 }
+button:disabled {
+  cursor: not-allowed;
+  background-color: #1a1a1a;
+}
 
 button:hover {
   background-color: #777;
