@@ -24,7 +24,7 @@ const TopDonos = () => {
     <div>
       <h2>Overall Top Donos</h2>
       <div className="horizontal-container">
-        {data.map((item, index) => (
+        {data?.map((item, index) => (
           <DonoPane key={index} {...item} />
         ))}
       </div>
