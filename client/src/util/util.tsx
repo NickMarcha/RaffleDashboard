@@ -1,6 +1,7 @@
 import React from "react";
 
 const RenderClickableMessage: React.FC<{ message: string }> = ({ message }) => {
+  if (message == null) return <></>;
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const parts = message.split(urlRegex);
 
