@@ -34,21 +34,50 @@ const accessCodeDoc = new GoogleSpreadsheet(
 );
 
 let APICallsSheet: GoogleSpreadsheetWorksheet;
-
 let accessCodeSheet: GoogleSpreadsheetWorksheet;
-
 let proccessedSheet: GoogleSpreadsheetWorksheet;
-
 let sortByRaffleTime: GoogleSpreadsheetWorksheet;
-
 let rawDataSheet: GoogleSpreadsheetWorksheet;
+let wasUpdated = {
+  APICalls: false,
+  accessCode: false,
+  proccessed: false,
+  sortByRaffleTime: false,
+  rawData: false,
+};
+async function saveUpdated() {
+  if (wasUpdated.APICalls) {
+    await APICallsSheet.saveUpdatedCells();
+    wasUpdated.APICalls = false;
+  }
+  if (wasUpdated.accessCode) {
+    await accessCodeSheet.saveUpdatedCells();
+    wasUpdated.accessCode = false;
+  }
+  if (wasUpdated.proccessed) {
+    await proccessedSheet.saveUpdatedCells();
+    wasUpdated.proccessed = false;
+  }
+  if (wasUpdated.sortByRaffleTime) {
+    await sortByRaffleTime.saveUpdatedCells();
+    wasUpdated.sortByRaffleTime = false;
+  }
+  if (wasUpdated.rawData) {
+    await rawDataSheet.saveUpdatedCells();
+    wasUpdated.rawData = false;
+  }
+}
 
 const loadAllSheets = async () => {
   await APICallsSheet.loadCells();
+  logger.info(APICallsSheet.title);
   await accessCodeSheet.loadCells();
+  logger.info(accessCodeDoc.title);
   await proccessedSheet.loadCells();
+  logger.info(proccessedSheet.title);
   await sortByRaffleTime.loadCells();
   await rawDataSheet.loadCells();
+  logger.info(sortByRaffleTime.title);
   logger.info("Loaded All Sheets");
 };
 
@@ -59,16 +88,9 @@ const instantiate = async () => {
   logger.info(doc.title);
 
   APICallsSheet = doc.sheetsByTitle["APICalls"];
-  logger.info(APICallsSheet.title);
-
   accessCodeSheet = accessCodeDoc.sheetsByTitle["AccessCode"];
-  logger.info(accessCodeDoc.title);
-
   proccessedSheet = doc.sheetsByTitle["Proccessed"];
-  logger.info(proccessedSheet.title);
-
   sortByRaffleTime = doc.sheetsByTitle["SortByRaffleTime"];
-  logger.info(sortByRaffleTime.title);
 
   rawDataSheet = doc.sheetsByTitle["Raw Data"];
   logger.info(rawDataSheet.title);
@@ -212,9 +234,8 @@ async function fetchAccessCodes() {
 }
 
 async function fetchValidRaffleEntries(lazy: boolean) {
+  logger.info("Fetching Valid Raffle Entries " + lazy ? "Lazy" : "Not Lazy");
   if (!lazy) await proccessedSheet.loadCells();
-  console.log("test");
-  console.log(proccessedSheet.getCellByA1(`B${2}`).value);
 
   let validRaffleEntries = [];
   let i = 2;
@@ -237,7 +258,6 @@ async function fetchValidRaffleEntries(lazy: boolean) {
     //logger.info(proccessedSheet.getCellByA1(`B${i}`).value);
   }
 
-  console.log(validRaffleEntries.length);
   return validRaffleEntries;
 }
 
@@ -274,22 +294,29 @@ async function setEntryToPlayed(
   const lastUpdatedCell = proccessedSheet.getCellByA1(`I${entryID}`);
   const updatedByCell = proccessedSheet.getCellByA1(`J${entryID}`);
   hasbeenplayedcell.value = true;
-  //console.log(proccessedSheet.getCellByA1(`D${entryID}`).value);
 
   lastUpdatedCell.value = new Date(Date.now()).toISOString();
   updatedByCell.value = updatedBy;
-  proccessedSheet.saveUpdatedCells();
+
+  wasUpdated.proccessed = true;
+  //proccessedSheet.saveUpdatedCells();
 }
 
-async function setEntryTimeStamp(entryID: number, updatedBy: string) {
+async function setEntryTimeStamp(
+  entryID: number,
+  updatedBy: string,
+  lazy: boolean
+) {
   try {
-    await proccessedSheet.loadCells(`I${entryID}:J${entryID}`);
+    if (!lazy) {
+      await proccessedSheet.loadCells(`I${entryID}:J${entryID}`);
+    }
     const lastUpdatedCell = proccessedSheet.getCellByA1(`I${entryID}`);
     const updatedByCell = proccessedSheet.getCellByA1(`J${entryID}`);
 
     lastUpdatedCell.value = new Date(Date.now()).toISOString();
     updatedByCell.value = updatedBy;
-    await proccessedSheet.saveUpdatedCells();
+    //await proccessedSheet.saveUpdatedCells();
   } catch (error) {
     logger.error(error);
   }
@@ -431,5 +458,6 @@ const APIEndPoint = {
   getAllRaffleEntries,
   instantiate,
   instantiated,
+  saveUpdated,
 };
 export default APIEndPoint;

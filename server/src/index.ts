@@ -195,23 +195,27 @@ app.get("/api/todaysTotal", async (req, res) => {
 
 app.get("/api/rollRaffle", auth, async (req, res) => {
   try {
+    logger.info(`Rolling Raffle ` + new Date().toLocaleString());
     let validRaffleEntries = await APIEndPoint.fetchValidRaffleEntries(false);
-    const min = validRaffleEntries[0].rollingSum;
-    logger.info(`Min: ${min}`);
+    logger.info(
+      `Valid Entries: ${validRaffleEntries.length} ` +
+        new Date().toLocaleString()
+    );
+
     const max = validRaffleEntries[validRaffleEntries.length - 1].rollingSum;
-
-    logger.info(`Max: ${max}`);
     const random = Math.floor(Math.random() * max);
-
     let winner: number | undefined = undefined;
 
-    logger.info(`Random: ${random}`);
     for (let i = 0; i < validRaffleEntries.length; i++) {
       if (random < validRaffleEntries[i].rollingSum) {
         winner = i;
         break;
       }
     }
+    logger.info(
+      `Determined winner: ${JSON.stringify(winner)} ` +
+        new Date().toLocaleString()
+    );
 
     if (winner === undefined) {
       throw new Error("Winner went to shit");
@@ -219,11 +223,13 @@ app.get("/api/rollRaffle", auth, async (req, res) => {
 
     let winnerID: number = validRaffleEntries[winner].index;
 
+    logger.info("Fetching winner " + new Date().toLocaleString());
     let winnerData = await APIEndPoint.fetchEntryByID(winnerID, true);
 
+    await APIEndPoint.setEntryTimeStamp(winnerID, req.alias, true);
+    logger.info("Fetched winner " + new Date().toLocaleString());
     res.json(winnerData);
-
-    APIEndPoint.setEntryTimeStamp(winnerID, req.alias);
+    APIEndPoint.saveUpdated();
   } catch (error) {
     logger.error(error);
     res.json(error);
@@ -274,6 +280,7 @@ app.post("/api/setEntryToPlayed", auth, async (request, response) => {
     response.status(200).send({
       message: "Updated Entry",
     });
+    APIEndPoint.saveUpdated();
   } catch (error) {
     logger.error(error);
     response.status(404).send({
@@ -338,17 +345,18 @@ app.get("/api/sortedByRaffleTime", async (req, res) => {
 app.post("/api/rollRaffles", auth, async (req, res) => {
   try {
     const amount = req.body.amount;
+    logger.info(`Rolling ${amount} raffles ` + new Date().toLocaleString());
     let validRaffleEntries = await APIEndPoint.fetchValidRaffleEntries(false);
-    const min = validRaffleEntries[0].rollingSum;
-    logger.info(`Min: ${min}`);
+    logger.info(
+      `Valid Entries: ${validRaffleEntries.length} ` +
+        new Date().toLocaleString()
+    );
+
     const max = validRaffleEntries[validRaffleEntries.length - 1].rollingSum;
-
-    logger.info(`Max: ${max}`);
-
     let winners: number[] = [];
+
     while (winners.length < amount) {
       const random = Math.floor(Math.random() * max);
-      logger.info(`Random: ${random}`);
       for (let i = 0; i < validRaffleEntries.length; i++) {
         if (random < validRaffleEntries[i].rollingSum) {
           if (!winners.includes(i)) winners.push(i);
@@ -356,15 +364,21 @@ app.post("/api/rollRaffles", auth, async (req, res) => {
         }
       }
     }
+    logger.info(
+      `Determined winners: ${JSON.stringify(winners)} ` +
+        new Date().toLocaleString()
+    );
 
     let winnerIDs = winners.map((winner) => validRaffleEntries[winner].index);
 
+    logger.info("Fetching winners " + new Date().toLocaleString());
     let fetches = winnerIDs.map((winnerID) =>
       APIEndPoint.fetchEntryByID(winnerID, true)
     );
 
     Promise.all(fetches).then((values) => {
       res.json(values);
+      logger.info("Fetched winners " + new Date().toLocaleString());
     });
   } catch (error) {
     logger.error(error);
