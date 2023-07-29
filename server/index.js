@@ -300,6 +300,16 @@ app.get("/api/latestfifty", async (req, res) => {
   }
 });
 
+app.post("/api/getAllRaffleEntries", auth, async (req, res) => {
+  try {
+    res.json(await APIEndPoint.getAllRaffleEntries(req.body));
+    logger.info("getAllRaffleEntries");
+  } catch (error) {
+    logger.info(error);
+    res.json(error);
+  }
+});
+
 app.get("/api/sortedByRaffleTime", async (req, res) => {
   try {
     res.json(await APIEndPoint.fetchEntriesSortedByRaffleTime(true));

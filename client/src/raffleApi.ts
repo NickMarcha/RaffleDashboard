@@ -184,6 +184,19 @@ export async function fetchSortedByRaffleTime() {
     console.error("Error fetching data:", error);
   }
 }
+export async function getAllRaffleEntries(donoB: any) {
+  try {
+    return await raffleClient
+      .post("/getAllRaffleEntries", donoB, {
+        headers: getAuthHeaderJSONPayload(),
+      })
+      .then((response) => {
+        return response.data;
+      });
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  }
+}
 
 export async function rollRaffleMore(i: number) {
   try {

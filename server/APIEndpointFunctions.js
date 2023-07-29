@@ -297,6 +297,40 @@ async function fetchEntriesSortedByRaffleTime(lazy) {
   return raffleEntries;
 }
 
+async function getAllRaffleEntries(donoPattern) {
+  let validRaffleEntries = [];
+  let i = 2;
+
+  while (proccessedSheet.getCellByA1(`B${i}`).value !== null) {
+    if (proccessedSheet.getCellByA1(`A${i}`).value === false) {
+      let obj = {};
+      if (donoPattern.entryID) {
+        obj.entryID = i;
+      }
+      if (donoPattern.sponsor) {
+        obj.sponsor = proccessedSheet.getCellByA1(`B${i}`).value;
+      }
+      if (donoPattern.date) {
+        obj.date = proccessedSheet.getCellByA1(`C${i}`).value;
+      }
+      if (donoPattern.location) {
+        obj.location = proccessedSheet.getCellByA1(`D${i}`).value;
+      }
+      if (donoPattern.amount) {
+        obj.amount = proccessedSheet.getCellByA1(`E${i}`).value;
+      }
+      if (donoPattern.message) {
+        obj.message = proccessedSheet.getCellByA1(`F${i}`).value;
+      }
+
+      validRaffleEntries.push(obj);
+    }
+    i++;
+  }
+
+  return validRaffleEntries;
+}
+
 async function updateLatest(scrapedEntries, scrapedTotalDonos, lazy) {
   let start = scrapedTotalDonos - scrapedEntries.length + 2;
   if (!lazy)
@@ -347,5 +381,6 @@ const APIEndPoint = {
   fetchEntriesSortedByRaffleTime,
   setEntryTimeStamp,
   updateLatest,
+  getAllRaffleEntries,
 };
 export default APIEndPoint;
