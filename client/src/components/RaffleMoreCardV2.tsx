@@ -23,7 +23,7 @@ const RaffleMoreCardV2: React.FC<RMProps> = ({
     <div
       className={`max-w-sm p-6 ${
         removing ? "bg-red" : "bg-black"
-      } border border-gray-200 rounded-lg shadow `}
+      } border  rounded-lg shadow border-blue `}
     >
       <div className="flex flex-row justify-between">
         <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 ">

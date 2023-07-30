@@ -2,28 +2,35 @@ import React from "react";
 
 const RenderClickableMessage: React.FC<{ message: string }> = ({ message }) => {
   if (message == null) return <></>;
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const parts = message.split(urlRegex);
+  try {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = message.split(urlRegex);
 
-  const elements: (string | React.JSX.Element)[] = parts.map((part, index) => {
-    if (part.match(urlRegex)) {
-      return (
-        <a
-          className="text-blue hover:underline"
-          key={index}
-          href={part}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {part}
-        </a>
-      );
-    } else {
-      return part;
-    }
-  });
+    const elements: (string | React.JSX.Element)[] = parts.map(
+      (part, index) => {
+        if (part.match(urlRegex)) {
+          return (
+            <a
+              className="text-blue hover:underline"
+              key={index}
+              href={part}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {part}
+            </a>
+          );
+        } else {
+          return part;
+        }
+      }
+    );
 
-  return <> {elements}</>;
+    return <> {elements}</>;
+  } catch (e) {
+    console.log(e);
+    return <></>;
+  }
 };
 function sendToClip(str: string) {
   if (typeof navigator.clipboard == "undefined") {

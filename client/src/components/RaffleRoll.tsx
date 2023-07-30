@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { rollRaffle, removeFromRaffle, fetchOverallTotals } from "../raffleApi";
+import { rollRaffle, fetchOverallTotals } from "../raffleApi";
 import { fromSerialDate } from "../util/util";
 import "./RaffleRoll.css";
 import DonoPane from "./DonoPane";
@@ -7,7 +7,7 @@ import { Dono, emptyDono, rollingDono } from "../types/DataTypes";
 
 const RaffleRoll = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [error, setError] = useState(null);
+  //const [error, setError] = useState(null);
   const [item, setItem] = useState<Dono>(emptyDono);
   const [suggestedSkipGoal, setSuggestedSkipGoal] = useState(0);
   const aFactor = 15;
@@ -44,7 +44,7 @@ const RaffleRoll = () => {
     setItem(result);
   };
   const handleRemoveFromRaffle = async () => {
-    const result = await removeFromRaffle(item.entryID);
+    //const result = await removeFromRaffle(item.entryID);
     setIsModalOpen(false);
     setItem(emptyDono);
   };
@@ -79,7 +79,7 @@ const RaffleRoll = () => {
         </div>
       )}
 
-      {error && <p>error: {error}</p>}
+      {/*{error && <p>error: {error}</p>}*/}
     </div>
   );
 };

@@ -14,7 +14,7 @@ const LoaderAnimation: React.FC<{}> = (props) => {
       xmlSpace="preserve"
     >
       <path
-        fill="#fff"
+        className="fill-red"
         d="M31.6,3.5C5.9,13.6-6.6,42.7,3.5,68.4c10.1,25.7,39.2,38.3,64.9,28.1l-3.1-7.9c-21.3,8.4-45.4-2-53.8-23.3
       c-8.4-21.3,2-45.4,23.3-53.8L31.6,3.5z"
       >
@@ -29,7 +29,7 @@ const LoaderAnimation: React.FC<{}> = (props) => {
         />
       </path>
       <path
-        fill="#fff"
+        className="fill-blue"
         d="M42.3,39.6c5.7-4.3,13.9-3.1,18.1,2.7c4.3,5.7,3.1,13.9-2.7,18.1l4.1,5.5c8.8-6.5,10.6-19,4.1-27.7
       c-6.5-8.8-19-10.6-27.7-4.1L42.3,39.6z"
       >

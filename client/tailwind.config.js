@@ -21,6 +21,15 @@ module.exports = {
       serif: ["Merriweather", "serif"],
     },
     extend: {
+      animation: {
+        wiggle: "wiggle 2s ease-in-out infinite",
+      },
+      keyframes: {
+        wiggle: {
+          "0%, 100%": { transform: "rotate(-3deg)" },
+          "50%": { transform: "rotate(3deg)" },
+        },
+      },
       spacing: {
         128: "32rem",
         144: "36rem",

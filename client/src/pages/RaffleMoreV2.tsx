@@ -6,6 +6,7 @@ import useArray from "../hooks/useArray";
 import StrawPollAPI, { ResultEntry } from "../util/StrawPollAPI";
 import { RenderClickableMessage, sendToClip } from "../util/util";
 import LoaderAnimation from "../util/loader";
+import CountdownTimer from "../components/countdown/CountDownTimer";
 const RaffleMoreV2 = () => {
   const [pollID, setPollID] = React.useState<string>("");
   const [raffleAmount, setRaffleAmount] = React.useState(3);
@@ -33,6 +34,8 @@ const RaffleMoreV2 = () => {
 
   const [raffling, setRaffling] = React.useState(false);
 
+  const [countDownDate, setCountDownDate] = React.useState(new Date());
+
   async function handleRaffleMoreButton() {
     setRaffling(true);
     clearDonos();
@@ -46,17 +49,27 @@ const RaffleMoreV2 = () => {
     setRaffling(false);
   }
 
+  /*
   const [pollButtonResultsEnabled, setPollButtonResultsEnabled] =
-    React.useState(false);
+    React.useState(false);*/
+
+  let getResultsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   async function handleCreatePollButton() {
     clearResults();
-    setPollButtonResultsEnabled(false);
+    setPollWinner(null);
+    //setPollButtonResultsEnabled(false);
     const newPollID = await StrawPollAPI.createPoll(deadline, donos);
+    const newCountdownDate = new Date(Date.now() + deadline * 1000);
+
+    setCountDownDate(newCountdownDate);
     setPollID(newPollID);
 
-    setTimeout(() => {
-      setPollButtonResultsEnabled(true);
+    if (getResultsTimer.current) {
+      clearTimeout(getResultsTimer.current);
+    }
+    getResultsTimer.current = setTimeout(() => {
+      //setPollButtonResultsEnabled(true);
       getPollResults(newPollID);
     }, 1000 * deadline + 5000);
   }
@@ -68,9 +81,10 @@ const RaffleMoreV2 = () => {
     console.log(winner);
     setPollWinner(winner);
   }
+  /*
   async function handlePollResultsButton() {
     getPollResults();
-  }
+  }*/
   function countToggles() {
     return toggleArray.reduce((a, item) => a + (item ? 1 : 0), 0);
   }
@@ -87,7 +101,7 @@ const RaffleMoreV2 = () => {
     await Promise.all(ps);
     await saveUpdated();
 
-    const result = await rollRaffleMore(raffleAmount);
+    const result = await rollRaffleMore(c);
     for (let i = 0; i < toggleArray.length; i++) {
       if (toggleArray[i]) {
         updateDonos(i, result.pop());
@@ -142,7 +156,7 @@ const RaffleMoreV2 = () => {
               Rafflemore
             </button>
             <button
-              disabled={raffling || donos.length == 0}
+              disabled={raffling || donos.length === 0}
               onClick={handleCreatePollButton}
             >
               Create Poll
@@ -158,12 +172,14 @@ const RaffleMoreV2 = () => {
             >
               Open Poll
             </button>
+            {/*
             <button
               disabled={pollID === "" || !pollButtonResultsEnabled}
               onClick={handlePollResultsButton}
             >
               Get Poll Results
             </button>{" "}
+            */}
             <br />
             <button
               disabled={countToggles() < 1 || removingEntries}
@@ -178,6 +194,7 @@ const RaffleMoreV2 = () => {
             </button>
             {raffling && <LoaderAnimation />}
           </div>
+
           {/*/////////////   RAFFLE RESULTS  ///////////////////*/}
           {donos?.map((dono, index) => (
             <div key={index} className="mb-2">
@@ -192,9 +209,19 @@ const RaffleMoreV2 = () => {
             </div>
           ))}
         </div>
+
+        {/*/////////////   POLL COUNTDOWN  ///////////////////*/}
+        {countDownDate > new Date(Date.now()) && (
+          <div className="flex-1 ml-10 mr-20 border-4 p-10 border-blue rounded-3xl min-h-584">
+            <div className="ml-40">
+              <h1 className="text-3xl font-bold   ">Voting Closes in:</h1>
+              <CountdownTimer targetDate={countDownDate}></CountdownTimer>
+            </div>
+          </div>
+        )}
         {/*/////////////   POLL RESULTS  ///////////////////*/}
-        <div className="flex-1 ml-10">
-          {pollWinner && (
+        {pollWinner && (
+          <div className="flex-1 ml-10 mr-20 border-4 p-10 border-blue rounded-3xl min-h-584">
             <h1 className="text-3xl font-bold mb-10  ">
               {"Winner: "}
               {[
@@ -202,25 +229,22 @@ const RaffleMoreV2 = () => {
                   ?.sponsor,
               ]}
               <br />
-              {RenderClickableMessage({ message: pollWinner.value })} <hr />
+              {RenderClickableMessage({ message: pollWinner.value })}{" "}
+              <hr className="border-blue border-4" />
             </h1>
-          )}
 
-          {pollResults
-            ?.sort((a, b) => {
-              return b.vote_points - a.vote_points;
-            })
-            .map((result, index) => (
-              <h1 className="text-1xl font-bold  break-normal ">
-                {"[" + result.vote_points + "] "}
-                {RenderClickableMessage({ message: result.value })}
-              </h1>
-            ))}
-
-          {/*
-          {pollID && <StrawPollEmbed strawPollID={pollID} />}
-          */}
-        </div>
+            {pollResults
+              ?.sort((a, b) => {
+                return b.vote_points - a.vote_points;
+              })
+              .map((result, index) => (
+                <h1 className="text-1xl font-bold  break-normal ">
+                  {"[" + result.vote_points + "] "}
+                  {RenderClickableMessage({ message: result.value })}
+                </h1>
+              ))}
+          </div>
+        )}
       </div>
     </div>
   );

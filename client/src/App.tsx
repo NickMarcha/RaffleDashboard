@@ -6,7 +6,6 @@ import NoPage from "./pages/NoPage";
 import History from "./pages/History";
 import { useEffect } from "react";
 import React from "react";
-import RaffleMore from "./pages/RaffleMore";
 import RaffleMoreV2 from "./pages/RaffleMoreV2";
 
 function App() {
