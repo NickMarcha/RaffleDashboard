@@ -212,16 +212,19 @@ const RaffleMoreV2 = () => {
 
         {/*/////////////   POLL COUNTDOWN  ///////////////////*/}
         {countDownDate > new Date(Date.now()) && (
-          <div className="flex-1 ml-10 mr-20 border-4 p-10 border-blue rounded-3xl min-h-584">
-            <div className="ml-40">
-              <h1 className="text-3xl font-bold   ">Voting Closes in:</h1>
-              <CountdownTimer targetDate={countDownDate}></CountdownTimer>
+          <div className="flex-1 ml-10  border-4 p-10 border-blue rounded-3xl min-h-584">
+            <div className="flex items-center justify-center flex-col">
+              <h1 className="text-3xl font-bold flex-1">Voting Closes in:</h1>
+              <div className="flex-1" />
+              <div className="flex-1">
+                <CountdownTimer targetDate={countDownDate}></CountdownTimer>
+              </div>
             </div>
           </div>
         )}
         {/*/////////////   POLL RESULTS  ///////////////////*/}
         {pollWinner && (
-          <div className="flex-1 ml-10 mr-20 border-4 p-10 border-blue rounded-3xl min-h-584">
+          <div className="flex-1 ml-10 border-4 p-10 border-blue rounded-3xl min-h-584">
             <h1 className="text-3xl font-bold mb-10  ">
               {"Winner: "}
               {[

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { rollRaffle, fetchOverallTotals } from "../raffleApi";
+import { rollRaffle, fetchOverallTotals, removeFromRaffle } from "../raffleApi";
 import { fromSerialDate } from "../util/util";
 import "./RaffleRoll.css";
 import DonoPane from "./DonoPane";
@@ -44,7 +44,7 @@ const RaffleRoll = () => {
     setItem(result);
   };
   const handleRemoveFromRaffle = async () => {
-    //const result = await removeFromRaffle(item.entryID);
+    await removeFromRaffle(item.entryID);
     setIsModalOpen(false);
     setItem(emptyDono);
   };
