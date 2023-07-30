@@ -153,7 +153,7 @@ async function fetchTotal() {
     donoTotal: fetchResult[1][0],
     raffleTotal: fetchResult[2][0],
     raffleDonoCount: fetchResult[3][0],
-  } as StatTotals;
+  };
   return statTotals;
 }
 
@@ -163,7 +163,7 @@ async function fetchTotal() {
  */
 async function fetchTop() {
   let result = await APIfetch(topRange, APICallsSheet, true);
-  let data: DonationData[] = [];
+  let data = [];
   for (let i = 0; i < result[0].length && result[0][i] != null; i++) {
     data.push({
       sponsor: result[0][i],
@@ -171,7 +171,7 @@ async function fetchTop() {
       location: result[2][i],
       amount: result[3][i],
       message: result[4][i],
-    } as DonationData);
+    });
   }
   return data;
 }
@@ -185,7 +185,7 @@ async function fetchYeeAndPepe() {
   let data = {
     yeeDonoTotal: result[0][0],
     pepeDonoTotal: result[0][1],
-  } as YeeAndPepeTotal;
+  };
   return data;
 }
 /**
@@ -201,7 +201,7 @@ async function fetchLatest() {
     location: result[3][0],
     amount: result[4][0],
     message: result[5][0],
-  } as DonationData;
+  };
   return data;
 }
 
@@ -217,7 +217,7 @@ async function fetchTodaysTop() {
     location: result[2][0],
     amount: result[3][0],
     message: result[4][0],
-  } as DonationData;
+  };
   return data;
 }
 
@@ -231,7 +231,7 @@ async function fetchTodaysTotal() {
     yeeTotal: result[0][0],
     pepeTotal: result[0][1],
     total: result[0][2],
-  } as TodaysTotals;
+  };
   return data;
 }
 /**
@@ -292,14 +292,14 @@ async function APIfetch(
  */
 async function fetchAccessCodes() {
   let result = await APIfetch(accessCodeRange, accessCodeSheet, true);
-  let data: AuthorizationEntry[] = [];
+  let data = [];
   for (let i = 0; i < result[0].length && result[0][i] != null; i++) {
     data.push({
       isActive: result[0][i],
       accessCode: result[1][i],
       alias: result[2][i],
       note: result[3][i],
-    } as AuthorizationEntry);
+    });
   }
   return data;
 }
@@ -335,7 +335,7 @@ async function fetchValidRaffleEntries(lazy: boolean) {
 }
 
 /**
- *
+ *Fetch raffle entry by indexID
  * @param entryID IndexID
  * @param lazy lazy use cache only, !lazy query Google Sheets
  * @returns
@@ -357,10 +357,16 @@ async function fetchEntryByID(entryID: number, lazy: boolean) {
     location,
     amount,
     message,
-  } as DonationData;
+  };
   return entryData;
 }
 
+/**
+ * Set Entry to played
+ * @param entryID indexID
+ * @param updatedBy Who updated the entry
+ * @param lazy lazy use cache only, !lazy query Google Sheets
+ */
 async function setEntryToPlayed(
   entryID: number,
   updatedBy: string,
@@ -379,6 +385,13 @@ async function setEntryToPlayed(
   wasUpdated.proccessed = true;
 }
 
+/**
+ * Set Entry Timestamp to appear as rolled
+ * @param entryID indexID
+ * @param updatedBy Who updated the entry
+ * @param lazy lazy use cache only, !lazy query Google Sheets
+ * @returns void promise
+ */
 async function setEntryTimeStamp(
   entryID: number,
   updatedBy: string,
@@ -400,6 +413,10 @@ async function setEntryTimeStamp(
   }
 }
 
+/**
+ * Fetches latest 50 entries, lazy
+ * @returns  50 entries sorted by date, newest first
+ */
 async function fetchLatest50() {
   let result = await APIfetch(latest50Range, APICallsSheet, true);
   let data = [];
@@ -412,11 +429,16 @@ async function fetchLatest50() {
       message: result[4][i],
     });
   }
-
+  // Reverse the array so it's in the correct order
   data = data.reverse();
   return data;
 }
 
+/**
+ *  Fetch entries already raffled sorted by raffle time
+ * @param lazy lazy use cache only, !lazy query Google Sheets
+ * @returns
+ */
 async function fetchEntriesSortedByRaffleTime(lazy: boolean) {
   if (!lazy) {
     logger.info("Not Lazy");
@@ -445,6 +467,11 @@ async function fetchEntriesSortedByRaffleTime(lazy: boolean) {
   return raffleEntries;
 }
 
+/**
+ * Returns all raffle entries with data specified in donoPattern
+ * @param donoPattern i.e {entryID: true, sponsor: true, date: true, location: true, amount: true, message: true, timeStamp: true}
+ * @returns donation entry
+ */
 async function getAllRaffleEntries(donoPattern: any) {
   let validRaffleEntries = [];
   let i = 2;
@@ -479,6 +506,12 @@ async function getAllRaffleEntries(donoPattern: any) {
   return validRaffleEntries;
 }
 
+/**
+ * Update the latest entries in the spreadsheet
+ * @param scrapedEntries entry as scraped
+ * @param scrapedTotalDonos the amount of entries scraped
+ * @param lazy lazy use cache only, !lazy query Google Sheets
+ */
 async function updateLatest(
   scrapedEntries: any[],
   scrapedTotalDonos: number,

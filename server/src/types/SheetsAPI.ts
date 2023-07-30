@@ -1,3 +1,4 @@
+/*
 interface StatTotals {
   donoCount: number;
   donoTotal: number;
@@ -11,12 +12,14 @@ interface TodaysTotals {
   total: number;
 }
 interface DonationData {
-  isActive?: boolean;
+  entryID?: number;
+  hasBeenRaffled?: boolean;
   sponsor: string;
   date: string;
   location: string;
   amount: number;
   message: string;
+  timeStamp?: number;
 }
 interface YeeAndPepeTotal {
   yeeDonoTotal: number;
@@ -28,3 +31,4 @@ interface AuthorizationEntry {
   alias: string;
   note: string;
 }
+*/

@@ -2,6 +2,9 @@ import winston from "winston";
 
 const rootLogLocation = "./logs/" + process.env.NODE_ENV + "/";
 
+/**
+ * Winston logger, info and error logs are stored in the logs folder
+ */
 const logger = winston.createLogger({
   level: "info",
   format: winston.format.json(),
