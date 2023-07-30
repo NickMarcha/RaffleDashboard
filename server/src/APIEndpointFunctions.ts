@@ -12,6 +12,9 @@ import {
 import logger from "./logger";
 
 import "dotenv/config";
+/**
+ * Permissions needed for Google Spreadsheet API access
+ */
 const SCOPES = [
   "https://www.googleapis.com/auth/spreadsheets",
   "https://www.googleapis.com/auth/drive.file",
@@ -23,11 +26,17 @@ const jwtFromEnv = new JWT({
   scopes: SCOPES,
 });
 
+/**
+ * The Database doc
+ */
 const doc = new GoogleSpreadsheet(
   process.env.SHEETS_DB_ID as string,
   jwtFromEnv
 );
 
+/**
+ * The Authorization doc
+ */
 const accessCodeDoc = new GoogleSpreadsheet(
   process.env.SHEETS_AUTHDB_ID as string,
   jwtFromEnv
@@ -38,6 +47,9 @@ let accessCodeSheet: GoogleSpreadsheetWorksheet;
 let proccessedSheet: GoogleSpreadsheetWorksheet;
 let sortByRaffleTime: GoogleSpreadsheetWorksheet;
 let rawDataSheet: GoogleSpreadsheetWorksheet;
+/**
+ * To allow for lazy updates, used with saveUpdated
+ */
 let wasUpdated = {
   APICalls: false,
   accessCode: false,
@@ -45,6 +57,9 @@ let wasUpdated = {
   sortByRaffleTime: false,
   rawData: false,
 };
+/**
+ * Save local cache updates to Google Spreadsheet DB after lazy updates
+ */
 async function saveUpdated() {
   logger.info(JSON.stringify(wasUpdated));
   if (wasUpdated.APICalls) {
@@ -70,6 +85,9 @@ async function saveUpdated() {
   logger.info("Saved Updated Cells");
 }
 
+/**
+ * Loads all sheets to cache sequentially
+ */
 const loadAllSheets = async () => {
   await APICallsSheet.loadCells();
   logger.info(APICallsSheet.title);
@@ -83,10 +101,21 @@ const loadAllSheets = async () => {
   logger.info("Loaded All Sheets");
 };
 
+/**
+ * Has first sheets load finished
+ */
 let instantiated = false;
+/**
+ * Has first sheets load finished
+ * @returns has instantiated
+ */
 const getInstantiated = () => {
   return instantiated;
 };
+
+/**
+ * Instantiates sheet properties and loads them to cache
+ */
 const instantiate = async () => {
   await accessCodeDoc.loadInfo();
   await doc.loadInfo(); // loads document properties and worksheets
@@ -103,6 +132,7 @@ const instantiate = async () => {
   instantiated = true;
 };
 
+///// API Fetch ranges
 const fetchRange = "A2:D2";
 const topRange = "A5:E8";
 const yeeAndPepeRange = "A10:A12";
@@ -112,20 +142,28 @@ const todaysTotalRange = "A24:A26";
 const accessCodeRange = "A2:D50";
 const latest50Range = "B29:F78";
 
+/**
+ * Fetches DB Totals
+ * @returns
+ */
 async function fetchTotal() {
-  let result = await APIfetch(fetchRange, APICallsSheet, true);
-  const resul = {
-    donoCount: result[0][0],
-    donoTotal: result[1][0],
-    raffleTotal: result[2][0],
-    raffleDonoCount: result[3][0],
-  };
-  return resul;
+  let fetchResult = await APIfetch(fetchRange, APICallsSheet, true);
+  const statTotals = {
+    donoCount: fetchResult[0][0],
+    donoTotal: fetchResult[1][0],
+    raffleTotal: fetchResult[2][0],
+    raffleDonoCount: fetchResult[3][0],
+  } as StatTotals;
+  return statTotals;
 }
 
+/**
+ * Fetches overall top donation(s) as an array
+ * @returns
+ */
 async function fetchTop() {
   let result = await APIfetch(topRange, APICallsSheet, true);
-  let data = [];
+  let data: DonationData[] = [];
   for (let i = 0; i < result[0].length && result[0][i] != null; i++) {
     data.push({
       sponsor: result[0][i],
@@ -133,17 +171,27 @@ async function fetchTop() {
       location: result[2][i],
       amount: result[3][i],
       message: result[4][i],
-    });
+    } as DonationData);
   }
   return data;
 }
 
+/**
+ * Fetches Yee and Pepe overall totals
+ * @returns
+ */
 async function fetchYeeAndPepe() {
   let result = await APIfetch(yeeAndPepeRange, APICallsSheet, true);
-  let data = { yeeDonoTotal: result[0][0], pepeDonoTotal: result[0][1] };
+  let data = {
+    yeeDonoTotal: result[0][0],
+    pepeDonoTotal: result[0][1],
+  } as YeeAndPepeTotal;
   return data;
 }
-
+/**
+ * Fetch latest Donation from cache
+ * @returns
+ */
 async function fetchLatest() {
   let result = await APIfetch(latestRange, APICallsSheet, true);
   let data = {
@@ -153,10 +201,14 @@ async function fetchLatest() {
     location: result[3][0],
     amount: result[4][0],
     message: result[5][0],
-  };
+  } as DonationData;
   return data;
 }
 
+/**
+ * Fetches Todays top donation
+ * @returns
+ */
 async function fetchTodaysTop() {
   let result = await APIfetch(todaysTopRange, APICallsSheet, true);
   let data = {
@@ -165,20 +217,30 @@ async function fetchTodaysTop() {
     location: result[2][0],
     amount: result[3][0],
     message: result[4][0],
-  };
+  } as DonationData;
   return data;
 }
 
+/**
+ * Fetches latest donation day's totals
+ * @returns
+ */
 async function fetchTodaysTotal() {
   let result = await APIfetch(todaysTotalRange, APICallsSheet, true);
   let data = {
     yeeTotal: result[0][0],
     pepeTotal: result[0][1],
     total: result[0][2],
-  };
+  } as TodaysTotals;
   return data;
 }
-
+/**
+ * Generalized Sheet fetch function using A1 notation
+ * @param range i.e. "A1:C4"
+ * @param sheet sheet to fetch from
+ * @param lazy lazy use cache only, !lazy query Google Sheets
+ * @returns
+ */
 async function APIfetch(
   range: string,
   sheet: GoogleSpreadsheetWorksheet,
@@ -224,20 +286,29 @@ async function APIfetch(
   return result;
 }
 
+/**
+ * Fetch access codes from Authorization sheet
+ * @returns
+ */
 async function fetchAccessCodes() {
   let result = await APIfetch(accessCodeRange, accessCodeSheet, true);
-  let data = [];
+  let data: AuthorizationEntry[] = [];
   for (let i = 0; i < result[0].length && result[0][i] != null; i++) {
     data.push({
       isActive: result[0][i],
       accessCode: result[1][i],
       alias: result[2][i],
       note: result[3][i],
-    });
+    } as AuthorizationEntry);
   }
   return data;
 }
 
+/**
+ * Fetches indexID's of valid Raffle entries, prepares for rolling raffle
+ * @param lazy lazy use cache only, !lazy query Google Sheets
+ * @returns "{index:indexid, rollingSum:for weighted lookup}[]"
+ */
 async function fetchValidRaffleEntries(lazy: boolean) {
   logger.info("Fetching Valid Raffle Entries " + lazy ? "Lazy" : "Not Lazy");
   if (!lazy) await proccessedSheet.loadCells();
@@ -259,13 +330,16 @@ async function fetchValidRaffleEntries(lazy: boolean) {
       });
     }
     i++;
-    //logger.info(i);
-    //logger.info(proccessedSheet.getCellByA1(`B${i}`).value);
   }
-
   return validRaffleEntries;
 }
 
+/**
+ *
+ * @param entryID IndexID
+ * @param lazy lazy use cache only, !lazy query Google Sheets
+ * @returns
+ */
 async function fetchEntryByID(entryID: number, lazy: boolean) {
   if (!lazy) await proccessedSheet.loadCells(`A${entryID}:J${entryID}`);
   const hasbeenplayedcell = proccessedSheet.getCellByA1(`A${entryID}`);
@@ -283,7 +357,7 @@ async function fetchEntryByID(entryID: number, lazy: boolean) {
     location,
     amount,
     message,
-  };
+  } as DonationData;
   return entryData;
 }
 
