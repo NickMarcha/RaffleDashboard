@@ -12,6 +12,9 @@ import {
 import logger from "./logger";
 
 import "dotenv/config";
+/**
+ * Permissions needed for Google Spreadsheet API access
+ */
 const SCOPES = [
   "https://www.googleapis.com/auth/spreadsheets",
   "https://www.googleapis.com/auth/drive.file",
@@ -23,11 +26,17 @@ const jwtFromEnv = new JWT({
   scopes: SCOPES,
 });
 
+/**
+ * The Database doc
+ */
 const doc = new GoogleSpreadsheet(
   process.env.SHEETS_DB_ID as string,
   jwtFromEnv
 );
 
+/**
+ * The Authorization doc
+ */
 const accessCodeDoc = new GoogleSpreadsheet(
   process.env.SHEETS_AUTHDB_ID as string,
   jwtFromEnv
@@ -38,6 +47,9 @@ let accessCodeSheet: GoogleSpreadsheetWorksheet;
 let proccessedSheet: GoogleSpreadsheetWorksheet;
 let sortByRaffleTime: GoogleSpreadsheetWorksheet;
 let rawDataSheet: GoogleSpreadsheetWorksheet;
+/**
+ * To allow for lazy updates, used with saveUpdated
+ */
 let wasUpdated = {
   APICalls: false,
   accessCode: false,
@@ -45,6 +57,9 @@ let wasUpdated = {
   sortByRaffleTime: false,
   rawData: false,
 };
+/**
+ * Save local cache updates to Google Spreadsheet DB after lazy updates
+ */
 async function saveUpdated() {
   logger.info(JSON.stringify(wasUpdated));
   if (wasUpdated.APICalls) {
@@ -70,6 +85,9 @@ async function saveUpdated() {
   logger.info("Saved Updated Cells");
 }
 
+/**
+ * Loads all sheets to cache sequentially
+ */
 const loadAllSheets = async () => {
   await APICallsSheet.loadCells();
   logger.info(APICallsSheet.title);
@@ -83,10 +101,21 @@ const loadAllSheets = async () => {
   logger.info("Loaded All Sheets");
 };
 
+/**
+ * Has first sheets load finished
+ */
 let instantiated = false;
+/**
+ * Has first sheets load finished
+ * @returns has instantiated
+ */
 const getInstantiated = () => {
   return instantiated;
 };
+
+/**
+ * Instantiates sheet properties and loads them to cache
+ */
 const instantiate = async () => {
   await accessCodeDoc.loadInfo();
   await doc.loadInfo(); // loads document properties and worksheets
@@ -103,6 +132,7 @@ const instantiate = async () => {
   instantiated = true;
 };
 
+///// API Fetch ranges
 const fetchRange = "A2:D2";
 const topRange = "A5:E8";
 const yeeAndPepeRange = "A10:A12";
@@ -112,17 +142,25 @@ const todaysTotalRange = "A24:A26";
 const accessCodeRange = "A2:D50";
 const latest50Range = "B29:F78";
 
+/**
+ * Fetches DB Totals
+ * @returns
+ */
 async function fetchTotal() {
-  let result = await APIfetch(fetchRange, APICallsSheet, true);
-  const resul = {
-    donoCount: result[0][0],
-    donoTotal: result[1][0],
-    raffleTotal: result[2][0],
-    raffleDonoCount: result[3][0],
+  let fetchResult = await APIfetch(fetchRange, APICallsSheet, true);
+  const statTotals = {
+    donoCount: fetchResult[0][0],
+    donoTotal: fetchResult[1][0],
+    raffleTotal: fetchResult[2][0],
+    raffleDonoCount: fetchResult[3][0],
   };
-  return resul;
+  return statTotals;
 }
 
+/**
+ * Fetches overall top donation(s) as an array
+ * @returns
+ */
 async function fetchTop() {
   let result = await APIfetch(topRange, APICallsSheet, true);
   let data = [];
@@ -138,12 +176,22 @@ async function fetchTop() {
   return data;
 }
 
+/**
+ * Fetches Yee and Pepe overall totals
+ * @returns
+ */
 async function fetchYeeAndPepe() {
   let result = await APIfetch(yeeAndPepeRange, APICallsSheet, true);
-  let data = { yeeDonoTotal: result[0][0], pepeDonoTotal: result[0][1] };
+  let data = {
+    yeeDonoTotal: result[0][0],
+    pepeDonoTotal: result[0][1],
+  };
   return data;
 }
-
+/**
+ * Fetch latest Donation from cache
+ * @returns
+ */
 async function fetchLatest() {
   let result = await APIfetch(latestRange, APICallsSheet, true);
   let data = {
@@ -157,6 +205,10 @@ async function fetchLatest() {
   return data;
 }
 
+/**
+ * Fetches Todays top donation
+ * @returns
+ */
 async function fetchTodaysTop() {
   let result = await APIfetch(todaysTopRange, APICallsSheet, true);
   let data = {
@@ -169,6 +221,10 @@ async function fetchTodaysTop() {
   return data;
 }
 
+/**
+ * Fetches latest donation day's totals
+ * @returns
+ */
 async function fetchTodaysTotal() {
   let result = await APIfetch(todaysTotalRange, APICallsSheet, true);
   let data = {
@@ -178,7 +234,13 @@ async function fetchTodaysTotal() {
   };
   return data;
 }
-
+/**
+ * Generalized Sheet fetch function using A1 notation
+ * @param range i.e. "A1:C4"
+ * @param sheet sheet to fetch from
+ * @param lazy lazy use cache only, !lazy query Google Sheets
+ * @returns
+ */
 async function APIfetch(
   range: string,
   sheet: GoogleSpreadsheetWorksheet,
@@ -224,6 +286,10 @@ async function APIfetch(
   return result;
 }
 
+/**
+ * Fetch access codes from Authorization sheet
+ * @returns
+ */
 async function fetchAccessCodes() {
   let result = await APIfetch(accessCodeRange, accessCodeSheet, true);
   let data = [];
@@ -238,6 +304,11 @@ async function fetchAccessCodes() {
   return data;
 }
 
+/**
+ * Fetches indexID's of valid Raffle entries, prepares for rolling raffle
+ * @param lazy lazy use cache only, !lazy query Google Sheets
+ * @returns "{index:indexid, rollingSum:for weighted lookup}[]"
+ */
 async function fetchValidRaffleEntries(lazy: boolean) {
   logger.info("Fetching Valid Raffle Entries " + lazy ? "Lazy" : "Not Lazy");
   if (!lazy) await proccessedSheet.loadCells();
@@ -259,13 +330,16 @@ async function fetchValidRaffleEntries(lazy: boolean) {
       });
     }
     i++;
-    //logger.info(i);
-    //logger.info(proccessedSheet.getCellByA1(`B${i}`).value);
   }
-
   return validRaffleEntries;
 }
 
+/**
+ *Fetch raffle entry by indexID
+ * @param entryID IndexID
+ * @param lazy lazy use cache only, !lazy query Google Sheets
+ * @returns
+ */
 async function fetchEntryByID(entryID: number, lazy: boolean) {
   if (!lazy) await proccessedSheet.loadCells(`A${entryID}:J${entryID}`);
   const hasbeenplayedcell = proccessedSheet.getCellByA1(`A${entryID}`);
@@ -287,6 +361,12 @@ async function fetchEntryByID(entryID: number, lazy: boolean) {
   return entryData;
 }
 
+/**
+ * Set Entry to played
+ * @param entryID indexID
+ * @param updatedBy Who updated the entry
+ * @param lazy lazy use cache only, !lazy query Google Sheets
+ */
 async function setEntryToPlayed(
   entryID: number,
   updatedBy: string,
@@ -305,6 +385,13 @@ async function setEntryToPlayed(
   wasUpdated.proccessed = true;
 }
 
+/**
+ * Set Entry Timestamp to appear as rolled
+ * @param entryID indexID
+ * @param updatedBy Who updated the entry
+ * @param lazy lazy use cache only, !lazy query Google Sheets
+ * @returns void promise
+ */
 async function setEntryTimeStamp(
   entryID: number,
   updatedBy: string,
@@ -326,6 +413,10 @@ async function setEntryTimeStamp(
   }
 }
 
+/**
+ * Fetches latest 50 entries, lazy
+ * @returns  50 entries sorted by date, newest first
+ */
 async function fetchLatest50() {
   let result = await APIfetch(latest50Range, APICallsSheet, true);
   let data = [];
@@ -338,11 +429,16 @@ async function fetchLatest50() {
       message: result[4][i],
     });
   }
-
+  // Reverse the array so it's in the correct order
   data = data.reverse();
   return data;
 }
 
+/**
+ *  Fetch entries already raffled sorted by raffle time
+ * @param lazy lazy use cache only, !lazy query Google Sheets
+ * @returns
+ */
 async function fetchEntriesSortedByRaffleTime(lazy: boolean) {
   if (!lazy) {
     logger.info("Not Lazy");
@@ -371,6 +467,11 @@ async function fetchEntriesSortedByRaffleTime(lazy: boolean) {
   return raffleEntries;
 }
 
+/**
+ * Returns all raffle entries with data specified in donoPattern
+ * @param donoPattern i.e {entryID: true, sponsor: true, date: true, location: true, amount: true, message: true, timeStamp: true}
+ * @returns donation entry
+ */
 async function getAllRaffleEntries(donoPattern: any) {
   let validRaffleEntries = [];
   let i = 2;
@@ -405,6 +506,12 @@ async function getAllRaffleEntries(donoPattern: any) {
   return validRaffleEntries;
 }
 
+/**
+ * Update the latest entries in the spreadsheet
+ * @param scrapedEntries entry as scraped
+ * @param scrapedTotalDonos the amount of entries scraped
+ * @param lazy lazy use cache only, !lazy query Google Sheets
+ */
 async function updateLatest(
   scrapedEntries: any[],
   scrapedTotalDonos: number,

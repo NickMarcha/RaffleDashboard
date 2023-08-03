@@ -3,6 +3,13 @@ import jwt from "jsonwebtoken";
 import logger from "./logger";
 
 const JWT_SECRET: string = process.env.JWT_SECRET as string;
+
+/**
+ * Middleware authentication check
+ * @param request
+ * @param response
+ * @param next
+ */
 export async function auth(
   request: Request,
   response: Response,

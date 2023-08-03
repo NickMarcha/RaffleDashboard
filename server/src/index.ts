@@ -57,9 +57,12 @@ const limiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 
+/**
+ * Repeatable scrape job, checks if APIEndpoint is instantiated first
+ * @returns
+ */
 const scrapeJob = () => {
   try {
-    console.log("Scrape Job " + APIEndPoint.getInstantiated());
     if (APIEndPoint.getInstantiated() === false) return;
     logger.info("Current time: " + new Date());
     logger.info("Running Scrape Job");
@@ -69,6 +72,10 @@ const scrapeJob = () => {
     logger.error(error);
   }
 };
+
+/**
+ * Schedule the scrape job to run every 15 minutes
+ */
 const job = schedule.scheduleJob("*/15 * * * *", scrapeJob);
 
 app.post("/api/login", limiter, async (request, response) => {
@@ -274,6 +281,9 @@ app.get("/api/rollRaffleNW", auth, async (req, res) => {
   }
 });
 
+/**
+ * Set entry to be played, can be done lazy
+ */
 app.post("/api/setEntryToPlayed", auth, async (request, response) => {
   try {
     const entryID = request.body.entryID;
@@ -295,6 +305,9 @@ app.post("/api/setEntryToPlayed", auth, async (request, response) => {
   }
 });
 
+/**
+ * To be used after lazy writing.
+ */
 app.get("/api/saveUpdated", auth, async (request, response) => {
   try {
     APIEndPoint.saveUpdated();

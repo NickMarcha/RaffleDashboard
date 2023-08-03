@@ -1,5 +1,9 @@
 ////////////////////////////// Sheet Coordinates //////////////////////////////
-// Function to convert a string to a number
+/**
+ * Converts Char String i.e google-sheets column to number
+ * @param str string formatted "AA", "AB", ...
+ * @returns number base25
+ */
 export function base25stringToNumber(str: string) {
   str = str.toUpperCase(); // Convert to uppercase for consistency
   let result = 0;
@@ -12,7 +16,11 @@ export function base25stringToNumber(str: string) {
   return result - 1; // Subtract 1 to match your mapping
 }
 
-// Function to convert a number to a string
+/**
+ * Converts base25 number into String i.e google-sheets column to number
+ * @param num number base25
+ * @returns string formatted "AA", "AB", ...
+ */
 export function numberToBase25String(num: number) {
   let result = "";
 
@@ -29,6 +37,11 @@ export function numberToBase25String(num: number) {
 
 ////////////////////////////// Date Conversion //////////////////////////////
 
+/**
+ * Converts a serial date number to date string
+ * @param serialDate Google Sheets serial date
+ * @returns date string i.e "31 jan 85"
+ */
 export function fromSerialDate(serialDate: number) {
   const epoch = new Date(1899, 11, 30);
   const daysSinceEpoch = serialDate;
@@ -45,26 +58,38 @@ export function fromSerialDate(serialDate: number) {
   return deserializedDate;
 }
 
-// Helper function to convert month numbers to names
-export function getMonthName(monthNumber: number) {
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
+/**
+ * Helper month array ["Jan","Feb", "Mar",...]
+ */
+const months = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
+/**
+ * Helper function to convert month numbers to names
+ * @param monthNumber
+ * @returns i.e. "Jan", "Feb"
+ */
+export function getMonthName(monthNumber: number) {
   return months[monthNumber];
 }
 
+/**
+ * Converts date string into serial number
+ * @param dateString i.e "31 jan 85"
+ * @returns serial number i.e. 12332132
+ */
 export function toSerialDate(dateString: string) {
   //console.log(`Converting date: ${dateString}`);
   const parts = dateString.split(" ");
@@ -84,24 +109,11 @@ export function toSerialDate(dateString: string) {
   return googleSheetsDate;
 }
 
-// Helper function to convert month names to numbers
+/**
+ * Convert month string to number
+ * @param monthName i.e "Jan", "Feb"
+ * @returns i.e "1", "12"
+ */
 function getMonthNumber(monthName: string) {
-  const months = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-
   return months.indexOf(monthName);
 }
-
-export const name = "square";

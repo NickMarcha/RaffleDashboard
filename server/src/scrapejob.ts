@@ -4,14 +4,32 @@ import "dotenv/config";
 import logger from "./logger.js";
 import APIEndPoint from "./APIEndpointFunctions.js";
 
+/**
+ * Url To scrape - malaria donations page
+ */
 const scrapeURL =
   "https://www.againstmalaria.com/Fundraiser.aspx?FundraiserID=8960";
+/**
+ * Selector to wait for the table to load
+ */
 const tableSelector = "#MainContent_UcFundraiserSponsors1_grdDonors";
+/**
+ * One of two selectors for a table entry
+ */
 const rowSelectorOne = "tr.TableItemStyle.TableItemText";
+/**
+ * Second of two selectors for a table entry
+ */
 const rowSelectorTwo = "tr.TableAlternatingItemStyle.TableItemText";
+/**
+ * Selector for total amount of donations
+ */
 const totalSelector =
   "#MainContent_UcFundraiserSponsors1_ucPager2_pnlTextCounter";
 
+/**
+ * Runs a scrape job then calls Sheets API(APIEndpointFunctions) with scraped data
+ */
 export async function fetchScrapeJob() {
   logger.info(`Starting load from: ${scrapeURL}`);
   await axios
@@ -21,15 +39,19 @@ export async function fetchScrapeJob() {
       const html = response.data;
       const $ = cheerio.load(html);
 
-      const tableExists = $(tableSelector).length > 0;
+      const tableExists = $(tableSelector).length > 0; //waiting for table to load
       logger.info(`Table exists: ${tableExists}`);
 
+      /**
+       * Total amount of donations
+       */
       const scrapedTotalDonos = +$(totalSelector)
         .text()
         .trim()
         .split(" ")
         .filter((str) => str !== "")[5];
 
+      //two arrays due to the two table selectors
       let dataOne: any[] = [];
       let dataTwo: any[] = [];
 
@@ -59,6 +81,11 @@ export async function fetchScrapeJob() {
         dataTwo[index],
       ]);
       const scrapedEntries = [].concat(...zipped).map((entry: string[]) => {
+        /**
+         * helper function,current scrape mistakenly combines two number values, this separates them
+         * @param nstr i.e "113"
+         * @returns i.e {one:"1",two:"13"}
+         */
         const split = (nstr: string) => {
           let l = nstr.length / 2;
           return {
@@ -66,6 +93,9 @@ export async function fetchScrapeJob() {
             two: nstr.substring(l, nstr.length),
           };
         };
+        /**
+         * TBA is when donations page has not provided distribution of nets yet
+         */
         if (entry.length === 8 && entry[6] == "TBA") {
           return {
             Sponsor: entry[0],
