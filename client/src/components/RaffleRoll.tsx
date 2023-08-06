@@ -4,6 +4,7 @@ import "./RaffleRoll.css";
 import DonationPane from "./DonationPane";
 import { ProcessedDonation } from "../types/Donation";
 import LoaderAnimation from "../util/loader";
+import { FindYoutubeVideoIdFromParagraph } from "../util/util";
 
 const RaffleRoll = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -82,20 +83,36 @@ const RaffleRoll = () => {
             <button onClick={handleRollRaffle}>doRaffleRoll</button>
             <button onClick={handleModalClose}>Close</button>
             {item !== null && (
-              <div className="displayRaffleResult">
-                <DonationPane donation={item} />
-                <span style={{ fontSize: "17px", fontWeight: "lighter" }}>
-                  Suggested
-                  <span title={explanation}>(?)</span> Minimum Skip Goal: $
-                  {suggestedSkipGoal}
-                </span>
-                <br />
-                <button
-                  className="warningButton"
-                  onClick={handleRemoveFromRaffle}
-                >
-                  Remove From Raffle
-                </button>
+              <div className="flex">
+                <div className="displayRaffleResult flex-auto">
+                  <DonationPane donation={item} />
+                  <span style={{ fontSize: "17px", fontWeight: "lighter" }}>
+                    Suggested
+                    <span title={explanation}>(?)</span> Minimum Skip Goal: $
+                    {suggestedSkipGoal}
+                  </span>
+                  <br />
+                  <button
+                    className="warningButton"
+                    onClick={handleRemoveFromRaffle}
+                  >
+                    Remove From Raffle
+                  </button>
+                </div>
+                {FindYoutubeVideoIdFromParagraph(item.message) !== null && (
+                  <div className="flex-auto">
+                    <iframe
+                      width="560"
+                      height="315"
+                      src={`https://www.youtube.com/embed/${FindYoutubeVideoIdFromParagraph(
+                        item.message
+                      )}`}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                )}
               </div>
             )}
             {raffling && (

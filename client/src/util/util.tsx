@@ -1,5 +1,25 @@
 import React from "react";
 
+const FindYoutubeVideoId = (url: string) => {
+  var regExp =
+    /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  var match = url.match(regExp);
+  if (match && match[2].length == 11) {
+    return match[2];
+  } else {
+    return null;
+  }
+};
+
+const FindYoutubeVideoIdFromParagraph = (paragraph: string) => {
+  const strings = paragraph.split(" ");
+  for (let i = 0; i < strings.length; i++) {
+    const id = FindYoutubeVideoId(strings[i]);
+    if (id != null) return id;
+  }
+  return null;
+};
+
 const RenderClickableMessage: React.FC<{ message: string }> = ({ message }) => {
   if (message == null) return <></>;
   try {
@@ -12,12 +32,13 @@ const RenderClickableMessage: React.FC<{ message: string }> = ({ message }) => {
           return (
             <a
               className="text-blue hover:underline"
+              title={part}
               key={index}
               href={part}
               target="_blank"
               rel="noopener noreferrer"
             >
-              {part}
+              {<p className="w-60 truncate ...">{part}</p>}
             </a>
           );
         } else {
@@ -116,4 +137,10 @@ function getFlagUrl(flagCode: string) {
   }
 }
 
-export { RenderClickableMessage, sendToClip, fromSerialDate, getFlagUrl };
+export {
+  RenderClickableMessage,
+  sendToClip,
+  fromSerialDate,
+  getFlagUrl,
+  FindYoutubeVideoIdFromParagraph,
+};
