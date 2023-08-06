@@ -32,6 +32,7 @@ const RenderClickableMessage: React.FC<{ message: string }> = ({ message }) => {
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
       if (part.match(urlRegex)) {
+        i++;
         elements.push(
           <a
             className="text-blue hover:underline"
