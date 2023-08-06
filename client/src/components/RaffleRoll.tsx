@@ -3,11 +3,15 @@ import { rollRaffle, fetchOverallTotals, removeFromRaffle } from "../raffleApi";
 import "./RaffleRoll.css";
 import DonationPane from "./DonationPane";
 import { ProcessedDonation } from "../types/Donation";
+import LoaderAnimation from "../util/loader";
 
 const RaffleRoll = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   //const [error, setError] = useState(null);
   const [item, setItem] = useState<ProcessedDonation | null>(null);
+
+  const [raffling, setRaffling] = useState(false);
+
   const [suggestedSkipGoal, setSuggestedSkipGoal] = useState(0);
   const aFactor = 15;
   const explanation = `MAX(dono amount +${aFactor}, f(donosInPool)) \nf(x) = 20+((250-20)/1.01^x)`;
@@ -29,13 +33,14 @@ const RaffleRoll = () => {
 
   const handleRollRaffle = async () => {
     await reset();
-
+    setRaffling(true);
     let result = await rollRaffle();
     if (result !== undefined) {
       //this is a hack to prevent the lastUpdated field from being displayed
       //last updated is set just before this so a timestamp is not needed
       result.lastUpdated = undefined;
 
+      setRaffling(false);
       setItem(result);
       let totalResult = await fetchOverallTotals();
       console.log("totalResult");
@@ -55,6 +60,8 @@ const RaffleRoll = () => {
         );
       }
     }
+
+    setRaffling(false);
   };
   const handleRemoveFromRaffle = async () => {
     setIsModalOpen(false);
@@ -89,6 +96,11 @@ const RaffleRoll = () => {
                 >
                   Remove From Raffle
                 </button>
+              </div>
+            )}
+            {raffling && (
+              <div className="max-w-lg">
+                <LoaderAnimation />
               </div>
             )}
           </div>
