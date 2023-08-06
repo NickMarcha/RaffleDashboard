@@ -4,7 +4,7 @@ const FindYoutubeVideoId = (url: string) => {
   var regExp =
     /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
   var match = url.match(regExp);
-  if (match && match[2].length == 11) {
+  if (match && match[2].length === 11) {
     return match[2];
   } else {
     return null;
@@ -23,29 +23,45 @@ const FindYoutubeVideoIdFromParagraph = (paragraph: string) => {
 const RenderClickableMessage: React.FC<{ message: string }> = ({ message }) => {
   if (message == null) return <></>;
   try {
+    const anyUrlRegex = /((https?:\/\/|www)[^\s]+)/g;
     const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const parts = message.split(urlRegex);
+    const parts = message.split(anyUrlRegex);
 
-    const elements: (string | React.JSX.Element)[] = parts.map(
-      (part, index) => {
-        if (part.match(urlRegex)) {
-          return (
-            <a
-              className="text-blue hover:underline"
-              title={part}
-              key={index}
-              href={part}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {<p className="w-60 truncate ...">{part}</p>}
-            </a>
-          );
-        } else {
-          return part;
-        }
+    const elements: (string | React.JSX.Element)[] = [];
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      if (part.match(urlRegex)) {
+        elements.push(
+          <a
+            className="text-blue hover:underline"
+            title={part}
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {<p className="w-60 truncate ...">{part}</p>}
+          </a>
+        );
+      } else if (part.match(anyUrlRegex)) {
+        ++i;
+        elements.push(
+          <a
+            className="text-blue hover:underline"
+            title={part}
+            key={i}
+            href={"https://" + part}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {<p className="w-60 truncate ...">{part}</p>}
+          </a>
+        );
+      } else {
+        elements.push(part);
       }
-    );
+    }
 
     return <> {elements}</>;
   } catch (e) {
