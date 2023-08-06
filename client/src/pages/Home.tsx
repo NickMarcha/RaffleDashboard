@@ -1,16 +1,16 @@
-import TopDonos from "../components/TopDonos";
-import TodaysTopDono from "../components/TodaysTopDonos";
+import TopDonations from "../components/TopDonos";
+import TodaysTopDono from "../components/TodaysTopDonations";
 import OverallTotals from "../components/OverallTotals";
 import YeeAndPepeTotal from "../components/YeeAndPepeTotal";
 import TodaysTotals from "../components/TodaysTotals";
-import LatestDono from "../components/LatestDono";
+import LatestDonation from "../components/LatestDonation";
 import React from "react";
 const Home = () => {
   return (
     <div id="Home">
       <div className="horizontal-container">
         <h1 className="vertical-header">LATEST</h1>
-        <LatestDono />
+        <LatestDonation />
         <h1 className="vertical-header">TODAY</h1>
         <div className="horizontal-items">
           <TodaysTopDono />
@@ -25,7 +25,7 @@ const Home = () => {
             <YeeAndPepeTotal />
             <OverallTotals />
           </div>
-          <TopDonos />
+          <TopDonations />
         </div>
       </div>
     </div>

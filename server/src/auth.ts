@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import logger from "./logger";
+import "dotenv/config";
 
 const JWT_SECRET: string = process.env.JWT_SECRET as string;
 
@@ -16,6 +17,10 @@ export async function auth(
   next: NextFunction
 ) {
   try {
+    if (!JWT_SECRET) {
+      logger.info("JWT_SECRET not set");
+      throw new Error("JWT_SECRET not set");
+    }
     //   get the token from the authorization header
     if (!request.headers.authorization) {
       logger.info("No token provided");

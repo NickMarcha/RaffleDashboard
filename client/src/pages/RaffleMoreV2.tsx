@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { Dono } from "../types/DataTypes";
+import { ProcessedDonation } from "../types/Donation";
 import RaffleMoreCardV2 from "../components/RaffleMoreCardV2";
 import { removeFromRaffle, rollRaffleMore, saveUpdated } from "../raffleApi";
 import useArray from "../hooks/useArray";
@@ -18,7 +18,7 @@ const RaffleMoreV2 = () => {
     set: setDonos,
     update: updateDonos,
     clear: clearDonos,
-  } = useArray<Dono>([]);
+  } = useArray<ProcessedDonation>([]);
   const {
     array: pollResults,
     set: setResults,
@@ -95,7 +95,7 @@ const RaffleMoreV2 = () => {
     let ps = [];
     for (let i = 0; i < toggleArray.length; i++) {
       if (toggleArray[i]) {
-        ps.push(removeFromRaffle(donos[i].entryID, true));
+        ps.push(removeFromRaffle(donos[i].NR, true));
       }
     }
     await Promise.all(ps);
@@ -199,7 +199,7 @@ const RaffleMoreV2 = () => {
           {donos?.map((dono, index) => (
             <div key={index} className="mb-2">
               <RaffleMoreCardV2
-                key={dono.entryID}
+                key={dono.NR}
                 isChecked={toggleArray[index]}
                 setToggleState={(newValue) => updateToggle(index, newValue)}
                 removing={removingEntries && toggleArray[index]}

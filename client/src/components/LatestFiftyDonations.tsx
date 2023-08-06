@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { fetchLatestFiftydonos } from "../raffleApi";
-import "./LatestFiftyDonos.css";
-import { Dono } from "../types/DataTypes";
+import { fetchLatestFiftyDonations } from "../raffleApi";
+import { ProcessedDonation } from "../types/Donation";
 
-const LatestFiftyDonos = () => {
-  const [data, setData] = useState<Dono[]>([]);
+const latestFiftyDonations = () => {
+  const [data, setData] = useState<ProcessedDonation[]>([]);
 
   useEffect(() => {
     async function setFetchData() {
-      const result = await fetchLatestFiftydonos();
+      const result = await fetchLatestFiftyDonations();
       setData(result);
     }
     setFetchData();
@@ -40,7 +39,9 @@ const LatestFiftyDonos = () => {
                 <strong>Message:</strong>
               </div>
               <div style={{ marginLeft: "40px", alignSelf: "center" }}>
-                <p className="message">{item.message}</p>
+                <p className="not-italic font-normal align-top h-auto whitespace-pre-line max-w-xs text-left break-words">
+                  {item.message}
+                </p>
               </div>
             </div>
           </li>
@@ -50,4 +51,4 @@ const LatestFiftyDonos = () => {
   );
 };
 
-export default LatestFiftyDonos;
+export default latestFiftyDonations;

@@ -12,6 +12,8 @@ import {
 import logger from "./logger";
 
 import "dotenv/config";
+import { Donation, YeeOrPepe } from "types/Donation";
+import { ProcessedDonation } from "./types/Donation";
 /**
  * Permissions needed for Google Spreadsheet API access
  */
@@ -38,23 +40,29 @@ const doc = new GoogleSpreadsheet(
  * The Authorization doc
  */
 const accessCodeDoc = new GoogleSpreadsheet(
-  process.env.SHEETS_AUTHDB_ID as string,
+  process.env.SHEETS_AUTH_DB_ID as string,
   jwtFromEnv
 );
 
-let APICallsSheet: GoogleSpreadsheetWorksheet;
 let accessCodeSheet: GoogleSpreadsheetWorksheet;
-let proccessedSheet: GoogleSpreadsheetWorksheet;
-let sortByRaffleTime: GoogleSpreadsheetWorksheet;
+let processedSheet: GoogleSpreadsheetWorksheet;
 let rawDataSheet: GoogleSpreadsheetWorksheet;
+
+/**
+ * Ranges for each sheet
+ */
+const accessCodeRange = "A2:D50";
+
+const processedSheetOffset = parseInt(
+  process.env.PROCESSED_SHEET_OFFSET || "2"
+);
+
 /**
  * To allow for lazy updates, used with saveUpdated
  */
 let wasUpdated = {
-  APICalls: false,
-  accessCode: false,
-  proccessed: false,
-  sortByRaffleTime: false,
+  //accessCode: false, Never updated from API
+  processed: false,
   rawData: false,
 };
 /**
@@ -62,42 +70,31 @@ let wasUpdated = {
  */
 async function saveUpdated() {
   logger.info(JSON.stringify(wasUpdated));
-  if (wasUpdated.APICalls) {
-    await APICallsSheet.saveUpdatedCells();
-    wasUpdated.APICalls = false;
+
+  await accessCodeSheet.saveUpdatedCells(); //Updates on any save
+
+  if (wasUpdated.processed) {
+    await processedSheet.saveUpdatedCells();
+    wasUpdated.processed = false;
   }
-  if (wasUpdated.accessCode) {
-    await accessCodeSheet.saveUpdatedCells();
-    wasUpdated.accessCode = false;
-  }
-  if (wasUpdated.proccessed) {
-    await proccessedSheet.saveUpdatedCells();
-    wasUpdated.proccessed = false;
-  }
-  if (wasUpdated.sortByRaffleTime) {
-    await sortByRaffleTime.saveUpdatedCells();
-    wasUpdated.sortByRaffleTime = false;
-  }
+
   if (wasUpdated.rawData) {
     await rawDataSheet.saveUpdatedCells();
     wasUpdated.rawData = false;
   }
-  logger.info("Saved Updated Cells");
+  logger.info("Saved Updated Sheets");
 }
 
 /**
  * Loads all sheets to cache sequentially
  */
 const loadAllSheets = async () => {
-  await APICallsSheet.loadCells();
-  logger.info(APICallsSheet.title);
   await accessCodeSheet.loadCells();
-  logger.info(accessCodeDoc.title);
-  await proccessedSheet.loadCells();
-  logger.info(proccessedSheet.title);
-  await sortByRaffleTime.loadCells();
+  logger.info("Loaded " + accessCodeDoc.title);
+  await processedSheet.loadCells();
+  logger.info("Loaded " + processedSheet.title);
   await rawDataSheet.loadCells();
-  logger.info(sortByRaffleTime.title);
+  logger.info("Loaded " + rawDataSheet.title);
   logger.info("Loaded All Sheets");
 };
 
@@ -121,118 +118,292 @@ const instantiate = async () => {
   await doc.loadInfo(); // loads document properties and worksheets
   logger.info(doc.title);
 
-  APICallsSheet = doc.sheetsByTitle["APICalls"];
   accessCodeSheet = accessCodeDoc.sheetsByTitle["AccessCode"];
-  proccessedSheet = doc.sheetsByTitle["Proccessed"];
-  sortByRaffleTime = doc.sheetsByTitle["SortByRaffleTime"];
-
-  rawDataSheet = doc.sheetsByTitle["Raw Data"];
-  logger.info(rawDataSheet.title);
+  if (accessCodeSheet === undefined) {
+    throw new Error("AccessCode Sheet is undefined");
+  }
+  processedSheet = doc.sheetsByTitle["Processed"];
+  if (processedSheet === undefined) {
+    throw new Error("Processed Sheet is undefined");
+  }
+  rawDataSheet = doc.sheetsByTitle["RawData"];
+  if (rawDataSheet === undefined) {
+    throw new Error("Raw Data Sheet is undefined");
+  }
   await loadAllSheets();
+
   instantiated = true;
 };
-
-///// API Fetch ranges
-const fetchRange = "A2:D2";
-const topRange = "A5:E8";
-const yeeAndPepeRange = "A10:A12";
-const latestRange = "A15:F15";
-const todaysTopRange = "A19:E19";
-const todaysTotalRange = "A24:A26";
-const accessCodeRange = "A2:D50";
-const latest50Range = "B29:F78";
 
 /**
  * Fetches DB Totals
  * @returns
  */
-async function fetchTotal() {
-  let fetchResult = await APIfetch(fetchRange, APICallsSheet, true);
+async function fetchTotal(lazy: boolean = true) {
+  const allProcessed = await fetchAllProcessed(lazy);
+
   const statTotals = {
-    donoCount: fetchResult[0][0],
-    donoTotal: fetchResult[1][0],
-    raffleTotal: fetchResult[2][0],
-    raffleDonoCount: fetchResult[3][0],
+    donationCount: allProcessed.length,
+    donationTotal: allProcessed.map((d) => d.amount).reduce((a, b) => a + b, 0),
+    raffleTotal: allProcessed
+      .filter((d) => d.inRaffle)
+      .map((d) => d.amount)
+      .reduce((a, b) => a + b, 0),
+    raffleDonationCount: allProcessed.filter((d) => d.inRaffle).length,
   };
   return statTotals;
+}
+
+async function fetchAllProcessed(
+  lazy: boolean = false
+): Promise<ProcessedDonation[]> {
+  if (!lazy) {
+    await processedSheet.loadCells();
+  }
+
+  let data: ProcessedDonation[] = [];
+
+  for (let nr = 1; nr < processedSheet.rowCount; nr++) {
+    const sheetIndex = nr + processedSheetOffset;
+    //return trueNR incase something went wrong with lookup
+    const nrCell = processedSheet.getCellByA1(`B${sheetIndex}`);
+    if (nrCell.value === null) {
+      break;
+    }
+
+    const trueNR = nrCell.value as number;
+
+    if (trueNR !== nr) {
+      logger.warn(`TrueNR ${trueNR} does not match lookup NR ${sheetIndex}`);
+      break;
+    }
+    const inRaffle = processedSheet.getCellByA1(`A${sheetIndex}`)
+      .value as boolean;
+    const flag = processedSheet.getCellByA1(`C${sheetIndex}`).value as string;
+    const sponsor = processedSheet.getCellByA1(`E${sheetIndex}`)
+      .value as string;
+    const date = processedSheet.getCellByA1(`F${sheetIndex}`)
+      .numberValue as number;
+    const location = processedSheet.getCellByA1(`G${sheetIndex}`)
+      .value as string;
+    const amount = processedSheet.getCellByA1(`H${sheetIndex}`)
+      .numberValue as number;
+    const message = processedSheet.getCellByA1(`I${sheetIndex}`)
+      .value as string;
+    const yeeOrPepe = processedSheet.getCellByA1(`J${sheetIndex}`)
+      .value as YeeOrPepe;
+    const lastUpdatedCell = processedSheet.getCellByA1(`K${sheetIndex}`);
+    let lastUpdated = undefined;
+    if (lastUpdatedCell.value !== null) {
+      lastUpdated = new Date(lastUpdatedCell.value as string);
+    }
+    const updatedByCell = processedSheet.getCellByA1(`L${sheetIndex}`);
+    let updatedBy = undefined;
+    if (updatedByCell.value !== null) {
+      updatedBy = updatedByCell.value as string;
+    }
+
+    const processedDonation: ProcessedDonation = new ProcessedDonation(
+      trueNR,
+      inRaffle,
+      flag,
+      sponsor,
+      date,
+      location,
+      amount,
+      message,
+      yeeOrPepe,
+      lastUpdated,
+      updatedBy
+    );
+    data.push(processedDonation);
+  }
+  return data;
 }
 
 /**
  * Fetches overall top donation(s) as an array
  * @returns
  */
-async function fetchTop() {
-  let result = await APIfetch(topRange, APICallsSheet, true);
-  let data = [];
-  for (let i = 0; i < result[0].length && result[0][i] != null; i++) {
-    data.push({
-      sponsor: result[0][i],
-      date: fromSerialDate(result[1][i] as number),
-      location: result[2][i],
-      amount: result[3][i],
-      message: result[4][i],
-    });
-  }
-  return data;
+async function fetchTop(lazy: boolean = true) {
+  const allProcessed = await fetchAllProcessed(lazy);
+
+  const highestDonationAmount = allProcessed
+    .map((d) => d.amount)
+    .reduce((previousMax, current) => {
+      return current > previousMax ? current : previousMax;
+    }, 0);
+
+  const topDonations = allProcessed.filter(
+    (d) => d.amount === highestDonationAmount
+  );
+  return topDonations.map((d) => {
+    return d.scrubConductor();
+  });
+
+  // for (let i = 0; i < result[0].length && result[0][i] != null; i++) {
+  //   data.push({
+  //     sponsor: result[0][i],
+  //     date: fromSerialDate(result[1][i] as number),
+  //     location: result[2][i],
+  //     amount: result[3][i],
+  //     message: result[4][i],
+  //   });
+  // }
+  // return data;
 }
 
 /**
  * Fetches Yee and Pepe overall totals
  * @returns
  */
-async function fetchYeeAndPepe() {
-  let result = await APIfetch(yeeAndPepeRange, APICallsSheet, true);
-  let data = {
-    yeeDonoTotal: result[0][0],
-    pepeDonoTotal: result[0][1],
+async function fetchYeeAndPepe(lazy = true) {
+  const allProcessed = await fetchAllProcessed(lazy);
+  const yeeDonationTotal = allProcessed
+    .filter((d) => d.yeeOrPepe === "YEE")
+    .reduce((a, b) => a + b.amount, 0);
+  const pepeDonationTotal = allProcessed
+    .filter((d) => d.yeeOrPepe === "PEPE")
+    .reduce((a, b) => a + b.amount, 0);
+  return {
+    yeeDonationTotal,
+    pepeDonationTotal,
   };
-  return data;
+}
+
+/**
+ * Fetches Yee and Pepe overall totals
+ * @returns
+ */
+async function fetchYeeAndPepeList(lazy = true): Promise<{
+  yeeList: Map<string, { sum: number; count: number }>;
+  pepeList: Map<string, { sum: number; count: number }>;
+  otherList: Map<string, { sum: number; count: number }>;
+}> {
+  const allProcessed = (await fetchAllProcessed(lazy)).map((d) => {
+    let newD = d.scrubConductor();
+    newD.sponsor = newD.sponsor.toLowerCase();
+    return newD;
+  });
+  const yeeDonations = allProcessed.filter((d) => d.yeeOrPepe === "YEE");
+  const pepeDonations = allProcessed.filter((d) => d.yeeOrPepe === "PEPE");
+  const otherDonations = allProcessed.filter((d) => d.yeeOrPepe === "NONE");
+  const uniqueYeeSponsors: string[] = [
+    ...new Set(yeeDonations.map((d) => d.sponsor)),
+  ];
+  const uniquePepeSponsors: string[] = [
+    ...new Set(pepeDonations.map((d) => d.sponsor)),
+  ];
+  const uniqueOtherSponsors: string[] = [
+    ...new Set(otherDonations.map((d) => d.sponsor)),
+  ];
+
+  let yeeList = new Map<string, { sum: number; count: number }>();
+
+  uniqueYeeSponsors.forEach((sponsor) => {
+    const donations = yeeDonations.filter((d) => d.sponsor === sponsor);
+    const sum = donations.reduce((a, b) => a + b.amount, 0);
+    yeeList.set(sponsor, { sum, count: donations.length });
+  });
+
+  let pepeList = new Map<string, { sum: number; count: number }>();
+
+  uniquePepeSponsors.forEach((sponsor) => {
+    const donations = pepeDonations.filter((d) => d.sponsor === sponsor);
+    const sum = donations.reduce((a, b) => a + b.amount, 0);
+    pepeList.set(sponsor, { sum, count: donations.length });
+  });
+
+  let otherList = new Map<string, { sum: number; count: number }>();
+
+  uniqueOtherSponsors.forEach((sponsor) => {
+    const donations = otherDonations.filter((d) => d.sponsor === sponsor);
+    const sum = donations.reduce((a, b) => a + b.amount, 0);
+    otherList.set(sponsor, { sum, count: donations.length });
+  });
+
+  return {
+    yeeList,
+    pepeList,
+    otherList,
+  };
 }
 /**
  * Fetch latest Donation from cache
  * @returns
  */
-async function fetchLatest() {
-  let result = await APIfetch(latestRange, APICallsSheet, true);
-  let data = {
-    isActive: result[0][0],
-    sponsor: result[1][0],
-    date: fromSerialDate(result[2][0] as number),
-    location: result[3][0],
-    amount: result[4][0],
-    message: result[5][0],
-  };
-  return data;
+async function fetchLatest(lazy = true) {
+  const allProcessed = await fetchAllProcessed(lazy);
+  const latestDonation = allProcessed.reverse()[0];
+  return latestDonation.scrubConductor();
+  // let result = await APIfetch(latestRange, APICallsSheet, true);
+  // let data = {
+  //   isActive: result[0][0],
+  //   sponsor: result[1][0],
+  //   date: fromSerialDate(result[2][0] as number),
+  //   location: result[3][0],
+  //   amount: result[4][0],
+  //   message: result[5][0],
+  // };
+  // return data;
 }
 
 /**
  * Fetches Todays top donation
  * @returns
  */
-async function fetchTodaysTop() {
-  let result = await APIfetch(todaysTopRange, APICallsSheet, true);
-  let data = {
-    sponsor: result[0][0],
-    date: fromSerialDate(result[1][0] as number),
-    location: result[2][0],
-    amount: result[3][0],
-    message: result[4][0],
-  };
-  return data;
+async function fetchTodaysTops(lazy = true): Promise<ProcessedDonation[]> {
+  const allProcessed = await fetchAllProcessed(lazy);
+  const lastDay = allProcessed.reverse()[0].date;
+  const lastDaysTopDonationAmount = allProcessed
+    .filter((d) => d.date === lastDay)
+    .map((d) => d.amount)
+    .reduce(
+      (previousAmount, b) => (previousAmount > b ? previousAmount : b),
+      0
+    );
+  const lastDaysTopDonations = allProcessed.filter(
+    (d) => d.date === lastDay && d.amount === lastDaysTopDonationAmount
+  );
+
+  return lastDaysTopDonations.map((d) => d.scrubConductor());
+  // let result = await APIfetch(todaysTopRange, APICallsSheet, true);
+  // let data = {
+  //   sponsor: result[0][0],
+  //   date: fromSerialDate(result[1][0] as number),
+  //   location: result[2][0],
+  //   amount: result[3][0],
+  //   message: result[4][0],
+  // };
+  // return data;
 }
 
 /**
  * Fetches latest donation day's totals
  * @returns
  */
-async function fetchTodaysTotal() {
-  let result = await APIfetch(todaysTotalRange, APICallsSheet, true);
-  let data = {
-    yeeTotal: result[0][0],
-    pepeTotal: result[0][1],
-    total: result[0][2],
+async function fetchTodaysTotal(lazy = true) {
+  const allProcessed = await fetchAllProcessed(lazy);
+  const lastDay = allProcessed.reverse()[0].date;
+  const lastDaysDonations = allProcessed.filter((d) => d.date === lastDay);
+
+  return {
+    yeeTotal: lastDaysDonations
+      .filter((d) => d.yeeOrPepe === "YEE")
+      .reduce((a, b) => a + b.amount, 0),
+    pepeTotal: lastDaysDonations
+      .filter((d) => d.yeeOrPepe === "PEPE")
+      .reduce((a, b) => a + b.amount, 0),
+    total: lastDaysDonations.reduce((a, b) => a + b.amount, 0),
   };
-  return data;
+  throw new Error("Function not implemented.");
+  // let result = await APIfetch(todaysTotalRange, APICallsSheet, true);
+  // let data = {
+  //   yeeTotal: result[0][0],
+  //   pepeTotal: result[0][1],
+  //   total: result[0][2],
+  // };
+  // return data;
 }
 /**
  * Generalized Sheet fetch function using A1 notation
@@ -246,8 +417,8 @@ async function APIfetch(
   sheet: GoogleSpreadsheetWorksheet,
   lazy: boolean
 ) {
-  const patt1 = /[0-9]/g;
-  const patt2 = /[a-zA-Z]/g;
+  const patternOne = /[0-9]/g;
+  const patternTwo = /[a-zA-Z]/g;
 
   if (!lazy) {
     logger.info("Not Lazy");
@@ -256,16 +427,16 @@ async function APIfetch(
     logger.info("Lazy");
   }
   let [left, right] = range.split(":");
-  let leftNumStr = left.match(patt1);
-  let rightNumStr = right.match(patt1);
+  let leftNumStr = left.match(patternOne);
+  let rightNumStr = right.match(patternOne);
   if (leftNumStr == null || rightNumStr == null) {
     throw new Error("No Num Str");
   }
 
   let leftNum = parseInt(leftNumStr.join(""));
-  let leftAlpha = "" + left.match(patt2);
+  let leftAlpha = "" + left.match(patternTwo);
   let rightNum = parseInt(rightNumStr.join(""));
-  let rightAlpha = "" + right.match(patt2);
+  let rightAlpha = "" + right.match(patternTwo);
 
   let result = [];
 
@@ -307,26 +478,27 @@ async function fetchAccessCodes() {
 /**
  * Fetches indexID's of valid Raffle entries, prepares for rolling raffle
  * @param lazy lazy use cache only, !lazy query Google Sheets
- * @returns "{index:indexid, rollingSum:for weighted lookup}[]"
+ * @returns
+ * @returns "{index:NR, rollingSum:for weighted lookup}[]"
  */
 async function fetchValidRaffleEntries(lazy: boolean) {
   logger.info("Fetching Valid Raffle Entries " + lazy ? "Lazy" : "Not Lazy");
-  if (!lazy) await proccessedSheet.loadCells();
+  if (!lazy) await processedSheet.loadCells();
 
   let validRaffleEntries = [];
-  let i = 2;
+  let i = 1 + processedSheetOffset;
 
-  while (proccessedSheet.getCellByA1(`B${i}`).value !== null) {
-    if (proccessedSheet.getCellByA1(`A${i}`).value === false) {
+  while (processedSheet.getCellByA1(`B${i}`).value !== null) {
+    if (processedSheet.getCellByA1(`A${i}`).value === true) {
       let prevSum: number =
         validRaffleEntries.length > 0
           ? validRaffleEntries[validRaffleEntries.length - 1].rollingSum
           : 0;
 
       validRaffleEntries.push({
-        index: i,
+        nr: processedSheet.getCellByA1(`B${i}`).value as number,
         rollingSum:
-          (proccessedSheet.getCellByA1(`E${i}`).value as number) + prevSum,
+          (processedSheet.getCellByA1(`H${i}`).value as number) + prevSum,
       });
     }
     i++;
@@ -336,29 +508,61 @@ async function fetchValidRaffleEntries(lazy: boolean) {
 
 /**
  *Fetch raffle entry by indexID
- * @param entryID IndexID
+ * @param index IndexID
  * @param lazy lazy use cache only, !lazy query Google Sheets
  * @returns
  */
-async function fetchEntryByID(entryID: number, lazy: boolean) {
-  if (!lazy) await proccessedSheet.loadCells(`A${entryID}:J${entryID}`);
-  const hasbeenplayedcell = proccessedSheet.getCellByA1(`A${entryID}`);
-  const hasbeenplayed = hasbeenplayedcell.value;
-  const sponsor = proccessedSheet.getCellByA1(`B${entryID}`).value;
-  const date = proccessedSheet.getCellByA1(`C${entryID}`).value;
-  const location = proccessedSheet.getCellByA1(`D${entryID}`).value;
-  const amount = proccessedSheet.getCellByA1(`E${entryID}`).value;
-  const message = proccessedSheet.getCellByA1(`F${entryID}`).value;
-  const entryData = {
-    entryID,
-    hasbeenplayed,
+async function fetchEntryByID(
+  nr: number,
+  lazy: boolean
+): Promise<ProcessedDonation> {
+  const index = nr + processedSheetOffset;
+
+  if (!lazy) await processedSheet.loadCells(`A${index}:J${index}`);
+
+  const inRaffle = processedSheet.getCellByA1(`A${index}`).value as boolean;
+
+  //return trueNR incase something went wrong with lookup
+  const trueNR = processedSheet.getCellByA1(`B${index}`).value as number;
+
+  if (trueNR !== nr) {
+    logger.warn(`TrueNR ${trueNR} does not match lookup NR ${nr}`);
+  }
+
+  const flag = processedSheet.getCellByA1(`C${index}`).value as string;
+  const sponsor = processedSheet.getCellByA1(`E${index}`).value as string;
+  const date = processedSheet.getCellByA1(`F${index}`).numberValue as number;
+  const location = processedSheet.getCellByA1(`G${index}`).value as string;
+  const amount = processedSheet.getCellByA1(`H${index}`).numberValue as number;
+  const message = processedSheet.getCellByA1(`I${index}`).value as string;
+  const yeeOrPepe = processedSheet.getCellByA1(`J${index}`).value as YeeOrPepe;
+  //TODO: Check Properly parse date
+  const lastUpdatedCell = processedSheet.getCellByA1(`K${index}`);
+  let lastUpdated = undefined;
+  if (lastUpdatedCell.value !== null) {
+    lastUpdated = new Date(lastUpdatedCell.value as string);
+  }
+
+  const updatedByCell = processedSheet.getCellByA1(`L${index}`);
+  let updatedBy = undefined;
+  if (updatedByCell.value !== null) {
+    updatedBy = updatedByCell.value as string;
+  }
+
+  const processedDonation: ProcessedDonation = new ProcessedDonation(
+    trueNR,
+    inRaffle,
+    flag,
     sponsor,
     date,
     location,
     amount,
     message,
-  };
-  return entryData;
+    yeeOrPepe,
+    lastUpdated,
+    updatedBy
+  );
+  return processedDonation;
 }
 
 /**
@@ -367,22 +571,29 @@ async function fetchEntryByID(entryID: number, lazy: boolean) {
  * @param updatedBy Who updated the entry
  * @param lazy lazy use cache only, !lazy query Google Sheets
  */
-async function setEntryToPlayed(
-  entryID: number,
-  updatedBy: string,
-  lazy: boolean
-) {
+async function setEntryToPlayed(nr: number, updatedBy: string, lazy: boolean) {
+  const index = nr + processedSheetOffset;
   if (!lazy) {
-    await proccessedSheet.loadCells(`A${entryID}:J${entryID}`);
+    await processedSheet.loadCells(`A${index}:J${index}`);
   }
-  const hasbeenplayedcell = proccessedSheet.getCellByA1(`A${entryID}`);
-  const lastUpdatedCell = proccessedSheet.getCellByA1(`I${entryID}`);
-  const updatedByCell = proccessedSheet.getCellByA1(`J${entryID}`);
-  hasbeenplayedcell.value = true;
+
+  //return trueNR incase something went wrong with lookup
+  const trueNR = processedSheet.getCellByA1(`B${index}`).value as number;
+
+  if (trueNR !== nr) {
+    logger.warn(`TrueNR ${trueNR} does not match lookup NR ${nr}`);
+  }
+
+  const inRaffleCell = processedSheet.getCellByA1(`A${index}`);
+
+  const lastUpdatedCell = processedSheet.getCellByA1(`K${index}`);
+  const updatedByCell = processedSheet.getCellByA1(`L${index}`);
 
   lastUpdatedCell.value = new Date(Date.now()).toISOString();
   updatedByCell.value = updatedBy;
-  wasUpdated.proccessed = true;
+  inRaffleCell.value = false;
+
+  wasUpdated.processed = true;
 }
 
 /**
@@ -392,21 +603,27 @@ async function setEntryToPlayed(
  * @param lazy lazy use cache only, !lazy query Google Sheets
  * @returns void promise
  */
-async function setEntryTimeStamp(
-  entryID: number,
-  updatedBy: string,
-  lazy: boolean
-) {
+async function setEntryTimeStamp(nr: number, updatedBy: string, lazy: boolean) {
   try {
+    const index = nr + processedSheetOffset;
     if (!lazy) {
-      await proccessedSheet.loadCells(`I${entryID}:J${entryID}`);
+      await processedSheet.loadCells(`A${index}:J${index}`);
     }
-    const lastUpdatedCell = proccessedSheet.getCellByA1(`I${entryID}`);
-    const updatedByCell = proccessedSheet.getCellByA1(`J${entryID}`);
+
+    //return trueNR incase something went wrong with lookup
+    const trueNR = processedSheet.getCellByA1(`B${index}`).value as number;
+
+    if (trueNR !== nr) {
+      logger.warn(`TrueNR ${trueNR} does not match lookup NR ${nr}`);
+    }
+
+    const lastUpdatedCell = processedSheet.getCellByA1(`K${index}`);
+    const updatedByCell = processedSheet.getCellByA1(`L${index}`);
 
     lastUpdatedCell.value = new Date(Date.now()).toISOString();
     updatedByCell.value = updatedBy;
-    wasUpdated.proccessed = true;
+
+    wasUpdated.processed = true;
     return;
   } catch (error) {
     logger.error(error);
@@ -418,20 +635,21 @@ async function setEntryTimeStamp(
  * @returns  50 entries sorted by date, newest first
  */
 async function fetchLatest50() {
-  let result = await APIfetch(latest50Range, APICallsSheet, true);
-  let data = [];
-  for (let i = 0; i < result[0].length && result[0][i] != null; i++) {
-    data.push({
-      sponsor: result[0][i],
-      date: fromSerialDate(result[1][i] as number),
-      location: result[2][i],
-      amount: result[3][i],
-      message: result[4][i],
-    });
-  }
-  // Reverse the array so it's in the correct order
-  data = data.reverse();
-  return data;
+  throw new Error("Not implemented");
+  // let result = await APIfetch(latest50Range, APICallsSheet, true);
+  // let data = [];
+  // for (let i = 0; i < result[0].length && result[0][i] != null; i++) {
+  //   data.push({
+  //     sponsor: result[0][i],
+  //     date: fromSerialDate(result[1][i] as number),
+  //     location: result[2][i],
+  //     amount: result[3][i],
+  //     message: result[4][i],
+  //   });
+  // }
+  // // Reverse the array so it's in the correct order
+  // data = data.reverse();
+  // return data;
 }
 
 /**
@@ -439,115 +657,136 @@ async function fetchLatest50() {
  * @param lazy lazy use cache only, !lazy query Google Sheets
  * @returns
  */
-async function fetchEntriesSortedByRaffleTime(lazy: boolean) {
-  if (!lazy) {
-    logger.info("Not Lazy");
-    await sortByRaffleTime.loadCells();
-  } else {
-    logger.info("Lazy");
-  }
-  let i = 2;
-  let raffleEntries = [];
+async function fetchEntriesSortedByRaffleTime(
+  lazy: boolean
+): Promise<ProcessedDonation[]> {
+  const allProcessed = await fetchAllProcessed(lazy);
+  const allRaffled = allProcessed.filter(
+    (entry) => !entry.inRaffle && !!entry.lastUpdated
+  );
+  const sortedByRaffleTime = allRaffled.sort((a, b) => {
+    if (!a.lastUpdated || !b.lastUpdated) {
+      throw new Error("Last updated is undefined, should not happen");
+    }
+    return a.lastUpdated.getTime() - b.lastUpdated.getTime();
+  });
 
-  while (sortByRaffleTime.getCellByA1(`A${i}`).value !== null) {
-    raffleEntries.push({
-      sponsor: sortByRaffleTime.getCellByA1(`A${i}`).value,
-      date: fromSerialDate(
-        sortByRaffleTime.getCellByA1(`B${i}`).value as number
-      ),
-      location: sortByRaffleTime.getCellByA1(`C${i}`).value,
-      amount: sortByRaffleTime.getCellByA1(`D${i}`).value,
-      message: sortByRaffleTime.getCellByA1(`E${i}`).value,
-      timeStamp: sortByRaffleTime.getCellByA1(`F${i}`).value,
-    });
+  return sortedByRaffleTime.reverse();
+  // if (!lazy) {
+  //   logger.info("Not Lazy");
+  //   await sortByRaffleTime.loadCells();
+  // } else {
+  //   logger.info("Lazy");
+  // }
+  // let i = 2;
+  // let raffleEntries = [];
 
-    i++;
-  }
+  // while (sortByRaffleTime.getCellByA1(`A${i}`).value !== null) {
+  //   raffleEntries.push({
+  //     sponsor: sortByRaffleTime.getCellByA1(`A${i}`).value,
+  //     date: fromSerialDate(
+  //       sortByRaffleTime.getCellByA1(`B${i}`).value as number
+  //     ),
+  //     location: sortByRaffleTime.getCellByA1(`C${i}`).value,
+  //     amount: sortByRaffleTime.getCellByA1(`D${i}`).value,
+  //     message: sortByRaffleTime.getCellByA1(`E${i}`).value,
+  //     timeStamp: sortByRaffleTime.getCellByA1(`F${i}`).value,
+  //   });
 
-  return raffleEntries;
+  //   i++;
+  // }
+
+  // return raffleEntries;
 }
 
 /**
- * Returns all raffle entries with data specified in donoPattern
- * @param donoPattern i.e {entryID: true, sponsor: true, date: true, location: true, amount: true, message: true, timeStamp: true}
+ * Returns all raffle entries with data specified in donationPattern
+ * @param donationPattern i.e {entryID: true, sponsor: true, date: true, location: true, amount: true, message: true, timeStamp: true}
  * @returns donation entry
  */
-async function getAllRaffleEntries(donoPattern: any) {
-  let validRaffleEntries = [];
-  let i = 2;
+async function getAllRaffleEntries(donationPattern: any) {
+  throw new Error("Not implemented");
+  // let validRaffleEntries = [];
+  // let i = 2;
 
-  while (proccessedSheet.getCellByA1(`B${i}`).value !== null) {
-    if (proccessedSheet.getCellByA1(`A${i}`).value === false) {
-      let obj: any = {};
-      if (donoPattern.entryID) {
-        obj.entryID = i;
-      }
-      if (donoPattern.sponsor) {
-        obj.sponsor = proccessedSheet.getCellByA1(`B${i}`).value;
-      }
-      if (donoPattern.date) {
-        obj.date = proccessedSheet.getCellByA1(`C${i}`).value;
-      }
-      if (donoPattern.location) {
-        obj.location = proccessedSheet.getCellByA1(`D${i}`).value;
-      }
-      if (donoPattern.amount) {
-        obj.amount = proccessedSheet.getCellByA1(`E${i}`).value;
-      }
-      if (donoPattern.message) {
-        obj.message = proccessedSheet.getCellByA1(`F${i}`).value;
-      }
+  // while (processedSheet.getCellByA1(`B${i}`).value !== null) {
+  //   if (processedSheet.getCellByA1(`A${i}`).value === false) {
+  //     let obj: any = {};
+  //     if (donationPattern.entryID) {
+  //       obj.entryID = i;
+  //     }
+  //     if (donationPattern.sponsor) {
+  //       obj.sponsor = processedSheet.getCellByA1(`B${i}`).value;
+  //     }
+  //     if (donationPattern.date) {
+  //       obj.date = processedSheet.getCellByA1(`C${i}`).value;
+  //     }
+  //     if (donationPattern.location) {
+  //       obj.location = processedSheet.getCellByA1(`D${i}`).value;
+  //     }
+  //     if (donationPattern.amount) {
+  //       obj.amount = processedSheet.getCellByA1(`E${i}`).value;
+  //     }
+  //     if (donationPattern.message) {
+  //       obj.message = processedSheet.getCellByA1(`F${i}`).value;
+  //     }
 
-      validRaffleEntries.push(obj);
-    }
-    i++;
-  }
+  //     validRaffleEntries.push(obj);
+  //   }
+  //   i++;
+  // }
 
-  return validRaffleEntries;
+  // return validRaffleEntries;
 }
 
 /**
  * Update the latest entries in the spreadsheet
- * @param scrapedEntries entry as scraped
- * @param scrapedTotalDonos the amount of entries scraped
+ * @param scrapedEntries
+ * @param fromSponsors
+ * @param toSponsors
+ * @param offset
  * @param lazy lazy use cache only, !lazy query Google Sheets
  */
 async function updateLatest(
-  scrapedEntries: any[],
-  scrapedTotalDonos: number,
+  scrapedEntries: Donation[],
+  fromSponsors: number,
+  toSponsors: number,
+  offset: number,
   lazy: boolean
 ) {
-  let start = scrapedTotalDonos - scrapedEntries.length + 2;
-  if (!lazy)
-    await rawDataSheet.loadCells(`A${start}:I${scrapedTotalDonos + 1}`);
-  logger.info(
-    `Loaded cells in Spreadsheet from A${start}:I${scrapedTotalDonos + 1}`
-  );
+  let start = fromSponsors + offset;
+  if (!lazy) {
+    await rawDataSheet.loadCells(`A${start}:I${toSponsors + offset}`);
+    console.log(
+      `Loaded cells in Spreadsheet from A${start}:I${toSponsors + offset}`
+    );
+  }
 
   scrapedEntries.reverse().forEach((entry, index) => {
     const row = index + start;
-    rawDataSheet.getCellByA1(`A${row}`).value = entry["Sponsor"];
-    rawDataSheet.getCellByA1(`B${row}`).numberValue = toSerialDate(
-      entry["Date"]
-    );
-    rawDataSheet.getCellByA1(`C${row}`).value = entry["Location"];
-    rawDataSheet.getCellByA1(`D${row}`).value = entry["Amount"];
-    rawDataSheet.getCellByA1(`E${row}`).value = entry["US$"];
-    rawDataSheet.getCellByA1(`F${row}`).value = entry["Gift Aid"];
-    rawDataSheet.getCellByA1(`G${row}`).value = entry["Message"];
-    rawDataSheet.getCellByA1(`H${row}`).value = entry["Nets"];
-    rawDataSheet.getCellByA1(`I${row}`).value = entry["People Saved"];
+    rawDataSheet.getCellByA1(`A${row}`).numberValue = 1 + row - offset;
+    rawDataSheet.getCellByA1(`B${row}`).value = entry.flagCode;
+    rawDataSheet.getCellByA1(`C${row}`).value = entry.sponsor;
+    rawDataSheet.getCellByA1(`D${row}`).value = entry.date;
+    rawDataSheet.getCellByA1(`E${row}`).value = entry.location;
+    rawDataSheet.getCellByA1(`F${row}`).value = entry.amount;
+    rawDataSheet.getCellByA1(`G${row}`).numberValue = entry.USDollarAmount;
+    rawDataSheet.getCellByA1(`H${row}`).numberValue = entry.giftAid;
+    rawDataSheet.getCellByA1(`I${row}`).value = entry.message;
+    rawDataSheet.getCellByA1(`J${row}`).value = entry.distributionFlag;
+    rawDataSheet.getCellByA1(`K${row}`).value = entry.distributionStatus;
+    rawDataSheet.getCellByA1(`L${row}`).numberValue = entry.numberOfNetsFunded;
+    rawDataSheet.getCellByA1(`M${row}`).numberValue = entry.numberOfPeopleSaved;
   });
-  logger.info("Prepared cells for update");
+  console.log("Prepared cells for update");
 
-  rawDataSheet
+  return await rawDataSheet
     .saveUpdatedCells()
     .then(() => {
-      logger.info("Cells updated");
-      loadAllSheets();
+      console.log("Cells updated");
     })
     .catch((error) => {
-      logger.error(error);
+      console.log(error);
     });
 }
 
@@ -556,7 +795,7 @@ const APIEndPoint = {
   fetchTop,
   fetchYeeAndPepe,
   fetchLatest,
-  fetchTodaysTop,
+  fetchTodaysTop: fetchTodaysTops,
   fetchTodaysTotal,
   fetchAccessCodes,
   fetchValidRaffleEntries,
@@ -570,5 +809,7 @@ const APIEndPoint = {
   instantiate,
   getInstantiated,
   saveUpdated,
+  loadAllSheets,
+  fetchYeeAndPepeList,
 };
 export default APIEndPoint;

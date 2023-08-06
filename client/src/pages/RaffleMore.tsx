@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { Dono } from "../types/DataTypes";
+import { ProcessedDonation } from "../types/Donation";
 import RaffleMoreCard from "../components/RaffleMoreCard";
 import { removeFromRaffle, rollRaffleMore } from "../raffleApi";
 import useArray from "../hooks/useArray";
@@ -18,7 +18,7 @@ const RaffleMore = () => {
 
     update: updateDonos,
     clear: clearDonos,
-  } = useArray<Dono>([]);
+  } = useArray<ProcessedDonation>([]);
   const {
     array: pollResults,
     set: setResults,
@@ -73,7 +73,7 @@ const RaffleMore = () => {
   }
   async function handleRemove(index: number) {
     console.log("handleRemove");
-    console.log(await removeFromRaffle(donos[index].entryID));
+    console.log(await removeFromRaffle(donos[index].NR));
     const result = await rollRaffleMore(1);
     updateDonos(index, result[0]);
   }

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Dono } from "../types/DataTypes";
+import { ProcessedDonation } from "../types/Donation";
 
 const strawpollAPIKey = "826b1c16-2cc3-11ee-a06d-d2b19cbdc231";
 
@@ -86,14 +86,17 @@ const starPollClient = axios.create({
   },
 });
 
-const createPoll = async (deadlineSeconds: number, donos: Dono[]) => {
+const createPoll = async (
+  deadlineSeconds: number,
+  donos: ProcessedDonation[]
+) => {
   pollOps.poll_config.deadline_at = Math.floor(
     new Date(Date.now() + deadlineSeconds * 1000).getTime() / 1000
   );
 
   pollOps.poll_options = donos.map((dono) => {
     return {
-      id: dono.entryID, //does nothing
+      id: dono.NR, //does nothing
       type: "text",
 
       value: dono.message,

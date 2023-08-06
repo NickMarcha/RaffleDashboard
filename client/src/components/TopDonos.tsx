@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { fetchOverallTopDonos } from "../raffleApi";
-import DonoPane from "./DonoPane";
-import { Dono } from "../types/DataTypes";
+import { fetchOverallTopDonations } from "../raffleApi";
+import DonationPane from "./DonationPane";
+import { ProcessedDonation } from "../types/Donation";
 
-const TopDonos = () => {
-  const [data, setData] = useState<Dono[]>([]);
+const TopDonations = () => {
+  const [data, setData] = useState<ProcessedDonation[]>([]);
 
   useEffect(() => {
     async function setFetchData() {
-      const result = await fetchOverallTopDonos();
-      setData(result);
+      const result = await fetchOverallTopDonations();
+
+      if (result !== undefined) {
+        setData(result);
+      }
     }
     setFetchData();
 
@@ -22,14 +25,17 @@ const TopDonos = () => {
 
   return (
     <div>
-      <h2>Overall Top Donos</h2>
+      <h2>Overall Top Donations</h2>
       <div className="horizontal-container">
-        {data?.map((item, index) => (
-          <DonoPane key={index} {...item} />
-        ))}
+        {/* {error && <div className="error">{error}</div>} */}
+
+        {data?.length !== 0 &&
+          data?.map((item, index) => (
+            <DonationPane key={index} donation={item} />
+          ))}
       </div>
     </div>
   );
 };
 
-export default TopDonos;
+export default TopDonations;

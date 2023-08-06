@@ -34,7 +34,7 @@ const LoginButton = () => {
   };
 
   return (
-    <div>
+    <div className="z-50">
       <button onClick={handleModalOpen}>Login</button>
 
       {isModalOpen && (

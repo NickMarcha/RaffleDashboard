@@ -1,6 +1,5 @@
 import express from "express";
 import schedule from "node-schedule";
-import { fetchScrapeJob } from "./scrapejob";
 import bodyParser from "body-parser";
 import jwt from "jsonwebtoken";
 import { auth } from "./auth";
@@ -8,6 +7,8 @@ import rateLimit from "express-rate-limit";
 import cors, { CorsOptions } from "cors";
 import logger from "./logger";
 import APIEndPoint from "./APIEndpointFunctions";
+import { scrapeSinglePage } from "./ScrapeAgainstMalaria";
+import { Response } from "express";
 
 const app = express();
 const normalizePort = (val: string) => {
@@ -29,13 +30,13 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Curb Cores Error by adding a header here
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader(
+app.use((req, response, next) => {
+  response.setHeader("Access-Control-Allow-Origin", "*");
+  response.setHeader(
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content, Accept, Content-Type, Authorization"
   );
-  res.setHeader(
+  response.setHeader(
     "Access-Control-Allow-Methods",
     "GET, POST, PUT, DELETE, PATCH, OPTIONS"
   );
@@ -61,12 +62,23 @@ const limiter = rateLimit({
  * Repeatable scrape job, checks if APIEndpoint is instantiated first
  * @returns
  */
-const scrapeJob = () => {
+const scrapeJob = async () => {
   try {
     if (APIEndPoint.getInstantiated() === false) return;
     logger.info("Current time: " + new Date());
     logger.info("Running Scrape Job");
-    fetchScrapeJob();
+    const data = await scrapeSinglePage();
+
+    if (typeof data === "undefined") {
+      console.log("No data");
+      return;
+    }
+    const start = data.totalDonations - data.endSponsorCount;
+    const end = data.totalDonations - data.startSponsorCount;
+
+    await APIEndPoint.updateLatest(data.donations, start, end, 3, false);
+    await APIEndPoint.saveUpdated();
+    await APIEndPoint.loadAllSheets();
   } catch (error) {
     console.log("scrapeJob error");
     logger.error(error);
@@ -77,17 +89,19 @@ const scrapeJob = () => {
  * Schedule the scrape job to run every 15 minutes
  */
 const job = schedule.scheduleJob("*/15 * * * *", scrapeJob);
+app.get("/api/ping", (req, response) => {
+  response.send("pong");
+});
 
 app.post("/api/login", limiter, async (request, response) => {
   try {
-    let reqaccessCode = request.body.accessCode;
-    let accesscodes = await APIEndPoint.fetchAccessCodes();
-    //logger.info(accesscodes);
+    let requestAccessCode = request.body.accessCode;
+    let accessCodes = await APIEndPoint.fetchAccessCodes();
 
-    logger.info({ reqaccessCode });
-    let result = accesscodes.find(
+    logger.info({ requestAccessCode });
+    let result = accessCodes.find(
       (entry) =>
-        "" + entry.accessCode === reqaccessCode &&
+        "" + entry.accessCode === requestAccessCode &&
         entry.isActive &&
         entry.accessCode != null
     );
@@ -95,7 +109,7 @@ app.post("/api/login", limiter, async (request, response) => {
       //   create JWT token
       const token = jwt.sign(
         {
-          accessCode: reqaccessCode,
+          accessCode: requestAccessCode,
           alias: result.alias,
         },
         process.env.JWT_SECRET as string,
@@ -105,7 +119,7 @@ app.post("/api/login", limiter, async (request, response) => {
       //   return success response
       response.status(200).send({
         message: "Login Successful",
-        accessCode: reqaccessCode,
+        accessCode: requestAccessCode,
         token,
       });
     } else {
@@ -117,8 +131,7 @@ app.post("/api/login", limiter, async (request, response) => {
       }, 2000); // Delay of 2000 milliseconds (2 seconds)
     }
   } catch (error) {
-    logger.error(error);
-    response.json(error);
+    handleErrorResponse(response, error);
   }
 });
 
@@ -127,8 +140,7 @@ app.get("/api/free-endpoint", (request, response) => {
   try {
     response.json({ message: "You are free to access me anytime" });
   } catch (error) {
-    logger.info(error);
-    response.json(error);
+    handleErrorResponse(response, error);
   }
 });
 
@@ -137,74 +149,104 @@ app.get("/api/auth-endpoint", auth, (request, response) => {
   try {
     response.json({ message: "You are authorized to access me" });
   } catch (error) {
-    logger.error(error);
-    response.json(error);
+    handleErrorResponse(response, error);
   }
 });
 
-app.get("/api/total", async (req, res) => {
+app.get("/api/total", async (req, response) => {
   try {
-    res.json(await APIEndPoint.fetchTotal());
+    const result = await APIEndPoint.fetchTotal();
+
     logger.info("Total");
+    logger.info("total " + JSON.stringify(result));
+    response.json(result);
   } catch (error) {
-    logger.error(error);
-    res.json(error);
+    handleErrorResponse(response, error);
   }
 });
 
-app.get("/api/top", async (req, res) => {
+app.get("/api/top", async (req, response) => {
   try {
-    res.json(await APIEndPoint.fetchTop());
+    response.json(await APIEndPoint.fetchTop());
     logger.info("Top");
   } catch (error) {
-    logger.error(error);
-    res.json(error);
+    handleErrorResponse(response, error);
   }
 });
 
-app.get("/api/yeeandpepe", async (req, res) => {
+app.get("/api/YeeAndPepe", async (req, response) => {
   try {
-    res.json(await APIEndPoint.fetchYeeAndPepe());
+    response.json(await APIEndPoint.fetchYeeAndPepe());
     logger.info("Yee and Pepe");
   } catch (error) {
-    logger.error(error);
-    res.json(error);
+    handleErrorResponse(response, error);
   }
 });
 
-app.get("/api/latest", async (req, res) => {
+app.get("/api/yeeAndPepeList", async (req, response) => {
+  function replacer(key: any, value: any) {
+    if (value instanceof Map) {
+      return {
+        dataType: "Map",
+        value: Array.from(value.entries()), // or with spread: value: [...value]
+      };
+    } else {
+      return value;
+    }
+  }
   try {
-    res.json(await APIEndPoint.fetchLatest());
+    const stringified = JSON.stringify(
+      await APIEndPoint.fetchYeeAndPepeList(),
+      replacer
+    );
+
+    response.send(stringified);
+    logger.info("yee And Pepe List");
+  } catch (error) {
+    handleErrorResponse(response, error);
+  }
+});
+
+app.get("/api/latest", async (req, response) => {
+  try {
+    response.json(await APIEndPoint.fetchLatest());
     logger.info("Latest");
   } catch (error) {
-    logger.error(error);
-    res.json(error);
+    handleErrorResponse(response, error);
   }
 });
 
-app.get("/api/todaysTop", async (req, res) => {
+app.get("/api/todaysTop", async (req, response) => {
   try {
-    res.json(await APIEndPoint.fetchTodaysTop());
+    response.json(await APIEndPoint.fetchTodaysTop());
     logger.info("Todays Top");
   } catch (error) {
-    logger.error(error);
-    res.json(error);
+    handleErrorResponse(response, error);
   }
 });
 
-app.get("/api/todaysTotal", async (req, res) => {
+app.get("/api/todaysTotal", async (req, response) => {
   try {
-    res.json(await APIEndPoint.fetchTodaysTotal());
+    response.json(await APIEndPoint.fetchTodaysTotal());
     logger.info("Todays Total");
   } catch (error) {
-    logger.error(error);
-    res.json(error);
+    handleErrorResponse(response, error);
   }
 });
 
-app.get("/api/rollRaffle", auth, async (req, res) => {
+app.get("/api/entry/:NR", auth, async (req, response) => {
   try {
-    logger.info(`Rolling Raffle ` + new Date().toLocaleString());
+    response.json(
+      await APIEndPoint.fetchEntryByID(parseInt(req.params.NR), true)
+    );
+  } catch (error) {
+    handleErrorResponse(response, error);
+  }
+});
+
+app.get("/api/rollRaffle", auth, async (req, response) => {
+  try {
+    logger.info(`Rolling Raffle |` + new Date().toLocaleString());
     let validRaffleEntries = await APIEndPoint.fetchValidRaffleEntries(false);
     logger.info(
       `Valid Entries: ${validRaffleEntries.length} ` +
@@ -212,7 +254,9 @@ app.get("/api/rollRaffle", auth, async (req, res) => {
     );
 
     const max = validRaffleEntries[validRaffleEntries.length - 1].rollingSum;
+    console.log(max);
     const random = Math.floor(Math.random() * max);
+    console.log(random);
     let winner: number | undefined = undefined;
 
     for (let i = 0; i < validRaffleEntries.length; i++) {
@@ -230,23 +274,22 @@ app.get("/api/rollRaffle", auth, async (req, res) => {
       throw new Error("Winner went to shit");
     }
 
-    let winnerID: number = validRaffleEntries[winner].index;
+    let winnerNR: number = validRaffleEntries[winner].nr;
 
-    logger.info("Fetching winner " + new Date().toLocaleString());
-    let winnerData = await APIEndPoint.fetchEntryByID(winnerID, true);
+    logger.info(`Fetching winner ${winnerNR} |${new Date().toLocaleString()}`);
+    let winnerData = await APIEndPoint.fetchEntryByID(winnerNR, true);
 
-    await APIEndPoint.setEntryTimeStamp(winnerID, req.alias, true);
-    logger.info("Fetched winner " + new Date().toLocaleString());
-    res.json(winnerData);
+    await APIEndPoint.setEntryTimeStamp(winnerNR, req.alias, true);
+    logger.info("Fetched winner |" + new Date().toLocaleString());
     await APIEndPoint.saveUpdated();
+    response.json(winnerData);
   } catch (error) {
-    logger.error(error);
-    res.json(error);
+    handleErrorResponse(response, error);
   }
 });
 
 /// Rolls raffle without Writing to db
-app.get("/api/rollRaffleNW", auth, async (req, res) => {
+app.get("/api/rollRaffleNW", auth, async (req, response) => {
   try {
     let validRaffleEntries = await APIEndPoint.fetchValidRaffleEntries(true);
     const min = validRaffleEntries[0].rollingSum;
@@ -270,14 +313,13 @@ app.get("/api/rollRaffleNW", auth, async (req, res) => {
       throw new Error("Winner went to shit");
     }
 
-    let winnerID = validRaffleEntries[winner].index;
+    let winnerNR = validRaffleEntries[winner].nr;
 
-    let winnerData = await APIEndPoint.fetchEntryByID(winnerID, true);
+    let winnerData = await APIEndPoint.fetchEntryByID(winnerNR, true);
 
-    res.json(winnerData);
+    response.json(winnerData);
   } catch (error) {
-    logger.error(error);
-    res.json(error);
+    handleErrorResponse(response, error);
   }
 });
 
@@ -322,60 +364,57 @@ app.get("/api/saveUpdated", auth, async (request, response) => {
   }
 });
 
-const scrapelimiter = rateLimit({
+const scrapeLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minutes
   max: 1, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 
-app.get("/api/runScrape", auth, scrapelimiter, async (req, res) => {
+app.get("/api/runScrape", auth, scrapeLimiter, async (req, response) => {
   logger.info(`Scrape requested by ${req.alias}`);
   try {
-    await fetchScrapeJob();
+    await scrapeJob();
 
-    res.status(200).send({
+    response.status(200).send({
       message: "Scrape job finished",
     });
   } catch (error) {
     logger.error(error);
-    res.status(404).send({
+    response.status(404).send({
       message: "Something went wrong",
     });
   }
 });
 
-app.get("/api/latestfifty", async (req, res) => {
+app.get("/api/latestFifty", async (req, response) => {
   try {
-    res.json(await APIEndPoint.fetchLatest50());
-    logger.info("latestfifty");
+    response.json(await APIEndPoint.fetchLatest50());
+    logger.info("latestFifty");
   } catch (error) {
-    logger.info(error);
-    res.json(error);
+    handleErrorResponse(response, error);
   }
 });
 
-app.post("/api/getAllRaffleEntries", auth, async (req, res) => {
+app.post("/api/getAllRaffleEntries", auth, async (req, response) => {
   try {
-    res.json(await APIEndPoint.getAllRaffleEntries(req.body));
+    response.json(await APIEndPoint.getAllRaffleEntries(req.body));
     logger.info("getAllRaffleEntries");
   } catch (error) {
-    logger.info(error);
-    res.json(error);
+    handleErrorResponse(response, error);
   }
 });
 
-app.get("/api/sortedByRaffleTime", async (req, res) => {
+app.get("/api/sortedByRaffleTime", async (req, response) => {
   try {
-    res.json(await APIEndPoint.fetchEntriesSortedByRaffleTime(true));
     logger.info("sortedByRaffleTime");
+    response.json(await APIEndPoint.fetchEntriesSortedByRaffleTime(false));
   } catch (error) {
-    logger.info(error);
-    res.json(error);
+    handleErrorResponse(response, error);
   }
 });
 
-app.post("/api/rollRaffles", auth, async (req, res) => {
+app.post("/api/rollRaffles", auth, async (req, response) => {
   try {
     const amount = req.body.amount;
     logger.info(`Rolling ${amount} raffles ` + new Date().toLocaleString());
@@ -402,7 +441,7 @@ app.post("/api/rollRaffles", auth, async (req, res) => {
         new Date().toLocaleString()
     );
 
-    let winnerIDs = winners.map((winner) => validRaffleEntries[winner].index);
+    let winnerIDs = winners.map((winner) => validRaffleEntries[winner].nr);
 
     logger.info("Fetching winners " + new Date().toLocaleString());
     let fetches = winnerIDs.map((winnerID) =>
@@ -410,19 +449,34 @@ app.post("/api/rollRaffles", auth, async (req, res) => {
     );
 
     Promise.all(fetches).then((values) => {
-      res.json(values);
+      response.json(values);
       logger.info("Fetched winners " + new Date().toLocaleString());
     });
   } catch (error) {
-    logger.error(error);
-    res.json(error);
+    handleErrorResponse(response, error);
   }
 });
 
 //404
-app.use((req, res, next) => {
-  res.status(404).send({ message: "404: endpoint not found" });
+app.use((req, response, next) => {
+  response.status(404).send({ message: "404: endpoint not found" });
 });
 app.listen(port, () => {
   logger.info(`Now listening on port ${port}`);
 });
+
+function handleErrorResponse(response: Response | null = null, error: any) {
+  logger.error(error);
+  if (response === null) {
+    return;
+  }
+  try {
+    if (error instanceof Error) {
+      response.json({ error: error.message });
+    } else {
+      response.json({ error: "Error" });
+    }
+  } catch (error) {
+    console.log("Response already sent");
+  }
+}

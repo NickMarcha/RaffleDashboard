@@ -1,33 +1,33 @@
 import RafflePane from "../components/RafflePane";
-import LatestDono from "../components/LatestDono";
-import TodaysTopDono from "../components/TodaysTopDonos";
+import LatestDonation from "../components/LatestDonation";
+import TopDonations from "../components/TodaysTopDonations";
 import TodaysTotals from "../components/TodaysTotals";
-import DonoSiteIframe from "../components/DonoSiteIframe";
+import DonationSiteIframe from "../components/DonationSiteIframe";
 import "./Raffle.css";
 import React from "react";
 
 const Raffle = () => {
   return (
-    <div id="Raffle" className="Raffle">
-      <div className="Raffle-left">
-        <div className="horizontal-container" style={{ flex: 2 }}>
+    <div id="Raffle" className="Raffle  z-10">
+      <div className="Raffle-left z-10">
+        <div className="horizontal-container z-10" style={{ flex: 2 }}>
           <h1 className="vertical-header">RAFFLE</h1>
           <RafflePane />
         </div>
-        <div className="horizontal-container" style={{ flex: 1 }}>
+        <div className="horizontal-container  z-0" style={{ flex: 1 }}>
           <h1 className="vertical-header">LATEST</h1>
-          <LatestDono />
+          <LatestDonation />
         </div>
-        <div className="horizontal-container" style={{ flex: 1 }}>
+        <div className="horizontal-container  z-0" style={{ flex: 1 }}>
           <h1 className="vertical-header">TODAY</h1>
           <div className="horizontal-items">
-            <TodaysTopDono />
+            <TopDonations />
             <TodaysTotals />
           </div>
         </div>
       </div>
-      <div className="Raffle-right">
-        <DonoSiteIframe />
+      <div className="Raffle-right  z-0">
+        <DonationSiteIframe />
       </div>
     </div>
   );

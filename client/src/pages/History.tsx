@@ -1,15 +1,24 @@
 import React, { useEffect, useState } from "react";
-import DonoPane from "../components/DonoPane";
+import DonationPane from "../components/DonationPane";
 import { fetchSortedByRaffleTime } from "../raffleApi";
 import "./History.css";
-import { Dono } from "../types/DataTypes";
+import { ProcessedDonation } from "../types/Donation";
 const History = () => {
-  const [donos, setDonos] = useState<Dono[]>([]);
+  const [donations, setDonations] = useState<null | ProcessedDonation[]>(null);
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
     async function setFetchData() {
       const result = await fetchSortedByRaffleTime();
-      setDonos(result);
+      if (result.error) {
+        console.log("ER", result.error);
+        setError(result.error);
+        return;
+      } else {
+        console.log("RES", result);
+        setError("");
+        setDonations(result);
+      }
     }
     setFetchData();
 
@@ -21,10 +30,14 @@ const History = () => {
   }, []);
 
   return (
-    <div className="donos-container">
-      {donos.map((dono, index) => (
-        <DonoPane key={index} {...dono} />
-      ))}
+    <div className="donations-container">
+      {error && <div className="error">{error}</div>}
+      {donations === null && <div className="loading">Loading...</div>}
+
+      {donations?.length !== 0 &&
+        donations?.map((donation, index) => (
+          <DonationPane key={donation.NR} donation={donation} />
+        ))}
     </div>
   );
 };

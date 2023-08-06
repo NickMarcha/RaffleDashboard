@@ -1,22 +1,22 @@
 import React from "react";
-import { Dono } from "../types/DataTypes";
+import { ProcessedDonation } from "../types/Donation";
 import { RenderClickableMessage, fromSerialDate } from "../util/util";
 import { useEffect, useState } from "react";
 
 interface RMProps {
   reroll: () => void;
   remove: () => void;
-  dono: Dono;
+  dono: ProcessedDonation;
 }
 
 const RaffleMoreCard: React.FC<RMProps> = ({ dono, reroll, remove }) => {
   let fdate;
-  if (dono.date) fdate = fromSerialDate(dono.date);
+  if (dono.date) fdate = dono.date;
   let [isDisabled, setIsDisabled] = useState(false);
 
   useEffect(() => {
     setIsDisabled(false);
-  }, [dono.entryID]);
+  }, [dono.NR]);
 
   return (
     <div

@@ -2,11 +2,17 @@ import React, { useState, useEffect } from "react";
 import { fetchOverallTotals } from "../raffleApi";
 
 const OverallTotals = () => {
-  const [data, setData] = useState<any>([]);
+  const [data, setData] = useState<{
+    donationCount: number;
+    donationTotal: number;
+    raffleTotal: number;
+    raffleDonationCount: number;
+  } | null>(null);
 
   useEffect(() => {
     async function setFetchData() {
       const result = await fetchOverallTotals();
+      if (result === undefined) return;
       setData(result);
     }
     setFetchData();
@@ -21,13 +27,15 @@ const OverallTotals = () => {
   return (
     <div>
       <h2>Overall</h2>
-      <ul>
-        <strong>Dono Count:</strong> {data.donoCount}
-        <br />
-        <strong>Dono Total:</strong> ${Math.round(data.donoTotal)}
-        <br />
-        <strong>Raffle Total:</strong> ${Math.round(data.raffleTotal)}
-      </ul>
+      {data !== null && (
+        <ul>
+          <strong>Dono Count:</strong> {data.donationCount}
+          <br />
+          <strong>Dono Total:</strong> ${Math.round(data.donationTotal)}
+          <br />
+          <strong>Raffle Total:</strong> ${Math.round(data.raffleTotal)}
+        </ul>
+      )}
     </div>
   );
 };

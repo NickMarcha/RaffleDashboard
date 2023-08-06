@@ -4,6 +4,7 @@ import LogoutButton from "../components/LogoutButton";
 import { isLoggedIn } from "../raffleApi";
 import "./Layout.css";
 import TedYee from "../assets/images/tedYee.png";
+import TedPepe from "../assets/images/tedPepe.png";
 import React from "react";
 import { sendToClip } from "../util/util";
 
@@ -23,13 +24,21 @@ const Layout = () => {
               <li>
                 <Link to="/raffle">Raffle</Link>
               </li>
-              <li>
+              {/* <li>
                 <Link to="/rafflemore">RaffleMore</Link>{" "}
-              </li>
+              </li> */}
               <li>
                 <Link to="/history">History</Link>
               </li>
-
+              <li>
+                <Link to="/yeeVSpepe">
+                  <div className="inline-flex	 h-5">
+                    <img className="flex-1" src={TedYee} alt="" />
+                    <span className="flex-1">vs</span>
+                    <img className="flex-1" src={TedPepe} alt="" />
+                  </div>
+                </Link>
+              </li>
               <li>
                 <LogoutButton />
               </li>

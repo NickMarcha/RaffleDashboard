@@ -1,10 +1,10 @@
 import React from "react";
-import { Dono } from "../types/DataTypes";
+import { ProcessedDonation } from "../types/Donation";
 import { RenderClickableMessage, fromSerialDate } from "../util/util";
 interface RMProps {
   setToggleState: (state: boolean) => void;
   isChecked: boolean;
-  dono: Dono;
+  dono: ProcessedDonation;
   disabled: boolean;
   removing: boolean;
 }

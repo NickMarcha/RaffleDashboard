@@ -1,5 +1,6 @@
 import Cookies from "js-cookie";
 import axios from "axios";
+import { ProcessedDonation } from "./types/Donation";
 const baseRaffleApiUrl = "/api";
 
 const raffleClient = axios.create({
@@ -47,7 +48,9 @@ export function logout() {
   console.log("User logged out");
 }
 
-export async function fetchOverallTopDonos() {
+export async function fetchOverallTopDonations(): Promise<
+  undefined | ProcessedDonation[]
+> {
   try {
     return await raffleClient.get("/top").then((response) => {
       return response.data;
@@ -57,7 +60,9 @@ export async function fetchOverallTopDonos() {
   }
 }
 
-export async function fetchTodaysTopDono() {
+export async function fetchTodaysTopDonation(): Promise<
+  undefined | ProcessedDonation[]
+> {
   try {
     return await raffleClient.get("/todaysTop").then((response) => {
       return response.data;
@@ -73,7 +78,7 @@ function getAuthHeader() {
   };
 }
 
-export async function rollRaffle() {
+export async function rollRaffle(): Promise<undefined | ProcessedDonation> {
   try {
     const response = await raffleClient.get(
       "/rollRaffle",
@@ -87,7 +92,7 @@ export async function rollRaffle() {
   }
 }
 
-export async function latestDono() {
+export async function latestDonation(): Promise<undefined | ProcessedDonation> {
   try {
     return await raffleClient.get("/latest").then((response) => {
       return response.data;
@@ -106,7 +111,7 @@ function getAuthHeaderJSONPayload() {
 }
 
 export async function removeFromRaffle(
-  id: string | undefined,
+  id: number | undefined,
   lazy: boolean = false
 ) {
   if (id === undefined) {
@@ -138,19 +143,37 @@ export async function doScrape() {
   }
 }
 
-export async function fetchOverallTotals() {
+export async function fetchOverallTotals(): Promise<
+  | undefined
+  | {
+      donationCount: number;
+      donationTotal: number;
+      raffleTotal: number;
+      raffleDonationCount: number;
+    }
+> {
   try {
-    return await raffleClient.get("/total").then((response) => {
+    const response = await raffleClient.get("/total");
+
+    if (response.data.error) {
+      throw new Error(response.data.error);
+    } else {
       return response.data;
-    });
+    }
   } catch (error) {
     console.error("Error fetching data:", error);
   }
 }
 
-export async function fetchYeeAndPepeTotal() {
+export async function fetchYeeAndPepeTotal(): Promise<
+  | undefined
+  | {
+      yeeDonationTotal: number;
+      pepeDonationTotal: number;
+    }
+> {
   try {
-    return await raffleClient.get("/yeeandpepe").then((response) => {
+    return await raffleClient.get("/YeeAndPepe").then((response) => {
       return response.data;
     });
   } catch (error) {
@@ -168,9 +191,9 @@ export async function fetchTodaysTotals() {
   }
 }
 
-export async function fetchLatestFiftydonos() {
+export async function fetchLatestFiftyDonations() {
   try {
-    return await raffleClient.get("/latestfifty").then((response) => {
+    return await raffleClient.get("/latestFifty").then((response) => {
       return response.data;
     });
   } catch (error) {
@@ -187,10 +210,10 @@ export async function fetchSortedByRaffleTime() {
     console.error("Error fetching data:", error);
   }
 }
-export async function getAllRaffleEntries(donoB: any) {
+export async function getAllRaffleEntries(donationPattern: any) {
   try {
     return await raffleClient
-      .post("/getAllRaffleEntries", donoB, {
+      .post("/getAllRaffleEntries", donationPattern, {
         headers: getAuthHeaderJSONPayload(),
       })
       .then((response) => {
@@ -224,6 +247,51 @@ export async function rollRaffleMore(i: number) {
     );
 
     return response.data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  }
+}
+
+export async function fetchYeeAndPepeLists(): Promise<
+  | undefined
+  | {
+      yeeList: Map<string, { sum: number; count: number }>;
+      pepeList: Map<string, { sum: number; count: number }>;
+      otherList: Map<string, { sum: number; count: number }>;
+    }
+> {
+  function reviver(key: any, value: any) {
+    if (typeof value === "object" && value !== null) {
+      if (value.dataType === "Map") {
+        console.log("Map");
+        return new Map(value.value);
+      }
+    }
+    console.log("value");
+    return value;
+  }
+
+  try {
+    const data = (
+      await raffleClient.get("/yeeAndPepeList", {
+        transformResponse: [
+          (data) => {
+            let resp;
+            try {
+              resp = JSON.parse(data, reviver);
+            } catch (e) {
+              throw new Error("Error parsing JSON");
+            }
+            return resp;
+          },
+        ],
+      })
+    ).data;
+    console.log(data);
+    console.log("parsed");
+    //console.log(JSON.parse(stringified, reviver));
+
+    return data;
   } catch (error) {
     console.error("Error fetching data:", error);
   }
