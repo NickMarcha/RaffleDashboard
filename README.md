@@ -157,21 +157,7 @@ You can now close your ssh session without shutting down you app.
 For development a nginx is not needed the [React Developoment proxy](https://create-react-app.dev/docs/proxying-api-requests-in-development/) is enough (already installed).
 it is sufficient to run the script `npm run installAll` in the root `package.json`.
 
-setup the file `server/.env`
-with development credentials:
-
-```
-#Google Auth
-GOOGLE_SERVICE_ACCOUNT_EMAIL="raffledevelopment@dggraffle.iam.gserviceaccount.com"
-GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCyQkd6MUIqWxmw\nadVc7Jw1tLemUjp66NnxYnpyORuAwyMwTtbMrF6C20K0W2Kj3EhO3krJu3T+CGkD\n82LaA8rhK98yMhRb4u2OLPEdzh7ZttZYhxznjy6eJSHl2vbHMCB8WBkXfC6N6+h0\nBamlxOUr/Zug80aOgeRliQQXmLGN7lAiqbUNcgq+bzSQQR1GpSt4szNRddW0oW8N\n2SGz6uvqfaosoqKdw4NJ9EzsAbD07mF2dS0cIfP45o9S0OfMJTYb25g8C1KKlMPX\nNQPxwTglBOR1ykDBE8V77CBRosIAkrecrMsYVozQo8gQV5wutdLauIVN4YpmOWIJ\nC9w4+IRDAgMBAAECggEANyd9wSd7jupoDOb6Dsng3VcgmZQIpx3jzSWIuE3GHjWC\nbkB+go50oa1gurgp0YRnVQu/fSKEpNMKVyAXvlf9DmWKJhhLp1CT6vEp22x6rCc/\ns91+SoFJTcI0dk+lGmVgL8j8XoFcUColXryfzHwa4l0SKZ8L/izfc7EMtJZYnY6R\nDSWiNLPl3+2XGR1QPTacdE/c+kuwwKb2e9epSgPSjiyYCi35Bkw/3qXzyfGQYNuN\noVhaBznsLh2sx4Lk3oWPyE5W+RgjNt7Tpkk2JaKifssFzYt7E7un5cMNHGx0QMEP\n8U6wnUoMa5GhGLZO+2hfx0GIG1T+/OnlYTJFEKCA1QKBgQD01czoqkquL5i6hLOg\nWW235xKdFenIIubq8vpIMzmnBy43N/2LCh61/6o+dDPF1jvLUNT9yeoazIZYyJqX\ng7XBfvxtbl7kaWBlM0fKFSFhvm+Zz0uN7qrIPT4O20POJQBpr+ui4NvV/Sr8zs64\nv7W8Sr209gJM7+t7k71D7i191wKBgQC6Y0TsbMXG5iumWw8FRkLs4CF7ksHdoOHI\nqqPnEnntYQOO+RazS1aAJ11sfiM4aP1Bl+zDKctIQ9qBOd2U3LIpSdST5+ztMtJu\nrCWtxbaKpxOvEuAhDYxWTSrndbuHOYcfZC8JzcNmI6hoC7ddQREULLgrSbZEupZQ\nA2XIjUfndQKBgFwJMuoTeddY1RToZY3VkEUdfAXJAwTU+fFAPY1+lCGRtXHUfl8S\nAtFvtlOb4wpvqjKXxDlS+cnxMF+XqWVjgaOnVMTeRJWgdzgTutzgbJgNum4bWs+T\n9GcpfnafPjHz/t+73dxworMiZFJ8e4E/r9WEUyP/hoXdeqwNsYwjsL4pAoGALrRN\nQwkGjg6DBY5vtxyiDIUlHrfpiEWWDhhkNbS1hLv4jkzwWUEZjcdPa6432RzFyTfu\nhgDlBVirWhJL6c9bfWkYsW8+OTmw7TaJwn92fEvdbNNIAkBI2B9CDvm7YekSaNVL\nzCMZQXDR9DBrZBy30Nxb0c0ItTQkEiynxpdQWzkCgYAG4PbA3ufCbCOf88E3FH0F\n86KMpFC19OmpYDIuNHC/l3T2ZteRqjF5njRfxzDfe44Ce2mmYUzc5CkiE47ABqcW\n8cXLsv6P8DHruL9QG3jM8vk8MIXB4JSKrvdoxYhsxu10B4jdaMPSsKq4DQmHJMIf\nNwc6WRJKQG1NNOgJmuuQwA==\n-----END PRIVATE KEY-----\n"
-#Sheets
-SHEETS_DB_ID=1wxwP5l6ylWepY5IgUtEHmvHj9x-Xrq1zKLO0irvv5p0
-SHEETS_AUTHDB_ID=1pkzu1JVZJUieYG7zYufk4BB-hjVQqn9BPq3dv2Dg5oo/
-#Hosting
-JWT_SECRET="YourMomWooyeah"
-HOST_URL="localhost"
-DOMAIN_NAME="localhost"
-```
+setup the file `server/.env` with development credentials, you can copy from [./server/.env.copy](./server/.env.copy)
 
 and run
 
