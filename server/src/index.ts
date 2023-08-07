@@ -7,7 +7,7 @@ import rateLimit from "express-rate-limit";
 import cors, { CorsOptions } from "cors";
 import logger from "./logger";
 import APIEndPoint from "./APIEndpointFunctions";
-import { scrapeSinglePage } from "./ScrapeAgainstMalaria";
+import { DonationsScraper, scrapeSinglePage } from "./ScrapeAgainstMalaria";
 import { Response } from "express";
 
 const app = express();
@@ -83,6 +83,40 @@ const scrapeJob = async () => {
     console.log("scrapeJob error");
     logger.error(error);
   }
+};
+
+const scrapeNPages = async (n: number) => {
+  try {
+    if (APIEndPoint.getInstantiated() === false) return;
+    logger.info("Current time: " + new Date());
+    logger.info("Running Scrape Job");
+
+    let ds: DonationsScraper = await DonationsScraper.createScraper(n);
+    const totalDonations = ds.totalDonations;
+    do {
+      let donationBatch = await ds.donationBatch();
+      if (typeof donationBatch === "undefined") {
+        console.log("No data");
+        return;
+      }
+      try {
+        await APIEndPoint.updateLatest(
+          donationBatch.donations,
+          totalDonations - donationBatch.endSponsorCount,
+          totalDonations - donationBatch.startSponsorCount,
+          3,
+          false
+        );
+      } catch (e) {
+        logger.error("GoogleAPI Error");
+        logger.error(e);
+      }
+    } while (await ds.goToNextPage());
+    ds.close();
+  } catch (error) {
+    logger.error(error);
+  }
+  logger.info("Multi Scrape Job Complete");
 };
 
 /**
@@ -386,6 +420,28 @@ app.get("/api/runScrape", auth, scrapeLimiter, async (req, response) => {
     });
   }
 });
+
+app.get(
+  "/api/runScrape/pages/:pages",
+  auth,
+  scrapeLimiter,
+  async (req, response) => {
+    logger.info(`Multi Scrape requested by ${req.alias}`);
+    try {
+      const nrPages: number = parseInt(req.params.pages);
+      await scrapeNPages(nrPages);
+
+      response.status(200).send({
+        message: "Scrape job finished",
+      });
+    } catch (error) {
+      logger.error(error);
+      response.status(404).send({
+        message: "Something went wrong",
+      });
+    }
+  }
+);
 
 app.get("/api/latestFifty", async (req, response) => {
   try {
