@@ -42,7 +42,7 @@ const RafflePane = () => {
           className="animate-[spin_40s_linear_infinite]	w-96 h-96 transition-opacity hover:animate-none"
           title="AgainstMalaria"
           scrolling="no"
-          src="https://docs.google.com/spreadsheets/d/e/2PACX-1vT02jloyxs18l0kZa3v216iIpRVfIO339nwWXAgPnFVlipoTTVo3x6XkN74NFMhwJok2IC5ccb2749v/pubchart?oid=546257356&format=interactive"
+          src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTFxw9_v0kDrfF7ffiNMXGTnLDOBk42slQhfKCH_zmkp4T7XT7tdfJ6Cfu_0pDCYCYh7-nWub1JhgYS/pubchart?oid=2101655783&amp;format=interactive"
         />
         <div style={{ float: "right" }}>
           {data !== null && (
