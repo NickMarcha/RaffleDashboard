@@ -72,7 +72,10 @@ export class DonationsScraper {
   static async createScraper(
     pagesToScrape?: number
   ): Promise<DonationsScraper> {
-    const browser = await puppeteer.launch({ headless: "new" });
+    const browser = await puppeteer.launch({
+      headless: "new",
+      args: ["--no-sandbox"],
+    });
     const page = await browser.newPage();
     await page.goto(scrapeURL);
     const htmlString = await page.content();
