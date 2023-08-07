@@ -64,10 +64,14 @@ const limiter = rateLimit({
  */
 const scrapeJob = async () => {
   try {
+    console.log("scrapeJob");
     if (APIEndPoint.getInstantiated() === false) return;
+    console.log("scrapeJob2");
     logger.info("Current time: " + new Date());
     logger.info("Running Scrape Job");
+
     const data = await scrapeSinglePage();
+    console.log("scrapeJob3");
 
     if (typeof data === "undefined") {
       console.log("No data");
@@ -81,6 +85,7 @@ const scrapeJob = async () => {
     await APIEndPoint.loadAllSheets();
   } catch (error) {
     console.log("scrapeJob error");
+    console.log(error);
     logger.error(error);
   }
 };
