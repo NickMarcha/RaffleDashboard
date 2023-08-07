@@ -192,7 +192,7 @@ app.get("/api/total", async (req, response) => {
     const result = await APIEndPoint.fetchTotal();
 
     logger.info("Total");
-    logger.info("total " + JSON.stringify(result));
+    //logger.info("total " + JSON.stringify(result));
     response.json(result);
   } catch (error) {
     handleErrorResponse(response, error);
