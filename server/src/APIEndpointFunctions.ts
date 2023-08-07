@@ -31,6 +31,10 @@ const jwtFromEnv = new JWT({
 /**
  * The Database doc
  */
+
+if (!process.env.SHEETS_DB_ID || process.env.SHEETS_DB_ID === undefined) {
+  throw new Error("SHEETS_DB_ID not set");
+}
 const doc = new GoogleSpreadsheet(
   process.env.SHEETS_DB_ID as string,
   jwtFromEnv
@@ -39,6 +43,12 @@ const doc = new GoogleSpreadsheet(
 /**
  * The Authorization doc
  */
+if (
+  !process.env.SHEETS_AUTH_DB_ID ||
+  process.env.SHEETS_AUTH_DB_ID === undefined
+) {
+  throw new Error("SHEETS_AUTH_DB_ID not set");
+}
 const accessCodeDoc = new GoogleSpreadsheet(
   process.env.SHEETS_AUTH_DB_ID as string,
   jwtFromEnv
