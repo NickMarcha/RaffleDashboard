@@ -12,6 +12,7 @@ const FindYoutubeVideoId = (url: string) => {
 };
 
 const FindYoutubeVideoIdFromParagraph = (paragraph: string) => {
+  if (paragraph == null) return null;
   const strings = paragraph.split(" ");
   for (let i = 0; i < strings.length; i++) {
     const id = FindYoutubeVideoId(strings[i]);

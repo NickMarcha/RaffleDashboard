@@ -437,7 +437,7 @@ app.get(
       await scrapeNPages(nrPages);
 
       response.status(200).send({
-        message: "Scrape job finished",
+        message: "Multi Scrape job finished",
       });
     } catch (error) {
       logger.error(error);

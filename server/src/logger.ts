@@ -7,13 +7,12 @@ const rootLogLocation = "./logs/" + process.env.NODE_ENV + "/";
  */
 const logger = winston.createLogger({
   level: "info",
-  format: winston.format.json(),
+  format: winston.format.combine(
+    winston.format.timestamp(), // Add timestamps to logs
+    winston.format.json()
+  ),
 
   transports: [
-    //
-    // - Write all logs with importance level of `error` or less to `error.log`
-    // - Write all logs with importance level of `info` or less to `combined.log`
-    //
     new winston.transports.File({
       filename: rootLogLocation + "error.log",
       level: "error",
@@ -22,16 +21,17 @@ const logger = winston.createLogger({
   ],
 });
 
-//
-// If we're not in production then log to the `console` with the format:
-// `${info.level}: ${info.message} JSON.stringify({ ...rest }) `
-//
-if (process.env.NODE_ENV !== "production") {
-  logger.add(
-    new winston.transports.Console({
-      format: winston.format.simple(),
-    })
-  );
-}
+// Log to console regardless of environment
+logger.add(
+  new winston.transports.Console({
+    format: winston.format.combine(
+      winston.format.colorize(), // Add colors for console output
+      winston.format.timestamp(), // Add timestamps to console logs
+      winston.format.printf(({ timestamp, level, message }) => {
+        return `[${timestamp}] ${level}: ${message}`;
+      })
+    ),
+  })
+);
 
 export default logger;
