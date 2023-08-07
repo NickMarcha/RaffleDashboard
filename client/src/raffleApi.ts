@@ -201,9 +201,11 @@ export async function fetchLatestFiftyDonations() {
   }
 }
 
-export async function fetchSortedByRaffleTime() {
+export async function fetchRaffledEntries(): Promise<
+  undefined | ProcessedDonation[]
+> {
   try {
-    return await raffleClient.get("/sortedByRaffleTime").then((response) => {
+    return await raffleClient.get("/raffledEntries").then((response) => {
       return response.data;
     });
   } catch (error) {

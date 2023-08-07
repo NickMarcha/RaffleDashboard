@@ -663,50 +663,22 @@ async function fetchLatest50() {
 }
 
 /**
- *  Fetch entries already raffled sorted by raffle time
+ *  Fetch entries already raffled
  * @param lazy lazy use cache only, !lazy query Google Sheets
  * @returns
  */
-async function fetchEntriesSortedByRaffleTime(
+async function fetchRaffledEntries(
   lazy: boolean
 ): Promise<ProcessedDonation[]> {
   const allProcessed = await fetchAllProcessed(lazy);
-  const allRaffled = allProcessed.filter(
-    (entry) => !entry.inRaffle && !!entry.lastUpdated
-  );
-  const sortedByRaffleTime = allRaffled.sort((a, b) => {
-    if (!a.lastUpdated || !b.lastUpdated) {
-      throw new Error("Last updated is undefined, should not happen");
-    }
-    return a.lastUpdated.getTime() - b.lastUpdated.getTime();
-  });
+  const allRaffled = allProcessed
+    .filter((entry) => !entry.inRaffle)
+    .map((entry) => {
+      entry.scrubConductor();
+      return entry;
+    });
 
-  return sortedByRaffleTime.reverse();
-  // if (!lazy) {
-  //   logger.info("Not Lazy");
-  //   await sortByRaffleTime.loadCells();
-  // } else {
-  //   logger.info("Lazy");
-  // }
-  // let i = 2;
-  // let raffleEntries = [];
-
-  // while (sortByRaffleTime.getCellByA1(`A${i}`).value !== null) {
-  //   raffleEntries.push({
-  //     sponsor: sortByRaffleTime.getCellByA1(`A${i}`).value,
-  //     date: fromSerialDate(
-  //       sortByRaffleTime.getCellByA1(`B${i}`).value as number
-  //     ),
-  //     location: sortByRaffleTime.getCellByA1(`C${i}`).value,
-  //     amount: sortByRaffleTime.getCellByA1(`D${i}`).value,
-  //     message: sortByRaffleTime.getCellByA1(`E${i}`).value,
-  //     timeStamp: sortByRaffleTime.getCellByA1(`F${i}`).value,
-  //   });
-
-  //   i++;
-  // }
-
-  // return raffleEntries;
+  return allRaffled;
 }
 
 /**
@@ -812,7 +784,7 @@ const APIEndPoint = {
   fetchEntryByID,
   setEntryToPlayed,
   fetchLatest50,
-  fetchEntriesSortedByRaffleTime,
+  fetchRaffledEntries,
   setEntryTimeStamp,
   updateLatest,
   getAllRaffleEntries,

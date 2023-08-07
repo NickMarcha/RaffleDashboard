@@ -466,10 +466,10 @@ app.post("/api/getAllRaffleEntries", auth, async (req, response) => {
   }
 });
 
-app.get("/api/sortedByRaffleTime", async (req, response) => {
+app.get("/api/raffledEntries", async (req, response) => {
   try {
-    logger.info("sortedByRaffleTime");
-    response.json(await APIEndPoint.fetchEntriesSortedByRaffleTime(false));
+    logger.info("raffledEntries");
+    response.json(await APIEndPoint.fetchRaffledEntries(true));
   } catch (error) {
     handleErrorResponse(response, error);
   }
