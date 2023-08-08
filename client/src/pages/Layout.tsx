@@ -47,26 +47,71 @@ const Layout = () => {
         )}
         {!isLoggedIn() && <LogginButton />}
 
-        <span
-          className="text-3xl font-bold underline cursor-copy hover:bg-sky-700 "
-          title="Copy To Clipboard"
-          onClick={() => {
-            sendToClip("https://www.againstmalaria.com/destiny");
-          }}
-        >
-          https://www.againstmalaria.com/destiny
-        </span>
-        <span
-          title="Copy To Clipboard"
-          className="linkSpan"
-          onClick={() => {
-            sendToClip(
-              "https://docs.google.com/spreadsheets/d/e/2PACX-1vT02jloyxs18l0kZa3v216iIpRVfIO339nwWXAgPnFVlipoTTVo3x6XkN74NFMhwJok2IC5ccb2749v/pubhtml?gid=1688478255&single=true"
-            );
-          }}
-        >
-          Full Stats
-        </span>
+        <div className="flex flex-row justify-center items-center max-h-8">
+          <a
+            className="text-2xl font-bold underline hover:bg-sky-700 "
+            title="https://www.againstmalaria.com/destiny"
+            href="https://www.againstmalaria.com/destiny"
+          >
+            https://www.againstmalaria.com/destiny
+          </a>
+          <button
+            data-tooltip-target="button-payment-example-copy-clipboard-tooltip"
+            data-tooltip-placement="bottom"
+            title="Copy: https://www.againstmalaria.com/destiny"
+            onClick={() => {
+              sendToClip("https://www.againstmalaria.com/destiny");
+            }}
+            type="button"
+            data-copy-state="copy"
+            className="flex items-center px-3 py-2 text-xs font-medium text-gray-600 bg-gray-100 border-l border-gray-200 dark:border-gray-600 dark:text-gray-400 dark:bg-gray-800 hover:text-blue-700 dark:hover:text-white copy-to-clipboard-button"
+          >
+            <svg
+              className="w-3.5 h-3.5 mr-2"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="currentColor"
+              viewBox="0 0 18 20"
+            >
+              <path d="M5 9V4.13a2.96 2.96 0 0 0-1.293.749L.879 7.707A2.96 2.96 0 0 0 .13 9H5Zm11.066-9H9.829a2.98 2.98 0 0 0-2.122.879L7 1.584A.987.987 0 0 0 6.766 2h4.3A3.972 3.972 0 0 1 15 6v10h1.066A1.97 1.97 0 0 0 18 14V2a1.97 1.97 0 0 0-1.934-2Z"></path>
+              <path d="M11.066 4H7v5a2 2 0 0 1-2 2H0v7a1.969 1.969 0 0 0 1.933 2h9.133A1.97 1.97 0 0 0 13 18V6a1.97 1.97 0 0 0-1.934-2Z"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex flex-row justify-center items-center max-h-8">
+          <a
+            className="text-2xl font-bold underline hover:bg-sky-700 "
+            title="https://docs.google.com/spreadsheets/d/14tc3e6rPawCfjkVUiCW5QObgRsYM26Yzqd8Nhx2VL90"
+            href="https://docs.google.com/spreadsheets/d/14tc3e6rPawCfjkVUiCW5QObgRsYM26Yzqd8Nhx2VL90"
+          >
+            Full Stats
+          </a>
+          <button
+            title="Copy: https://docs.google.com/spreadsheets/d/14tc3e6rPawCfjkVUiCW5QObgRsYM26Yzqd8Nhx2VL90"
+            data-tooltip-target="button-payment-example-copy-clipboard-tooltip"
+            data-tooltip-placement="bottom"
+            onClick={() => {
+              sendToClip(
+                "https://docs.google.com/spreadsheets/d/14tc3e6rPawCfjkVUiCW5QObgRsYM26Yzqd8Nhx2VL90"
+              );
+            }}
+            type="button"
+            data-copy-state="copy"
+            className="flex items-center px-3 py-2 text-xs font-medium text-gray-600 bg-gray-100 border-l border-gray-200 dark:border-gray-600 dark:text-gray-400 dark:bg-gray-800 hover:text-blue-700 dark:hover:text-white copy-to-clipboard-button"
+          >
+            <svg
+              className="w-3.5 h-3.5 mr-2"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="currentColor"
+              viewBox="0 0 18 20"
+            >
+              <path d="M5 9V4.13a2.96 2.96 0 0 0-1.293.749L.879 7.707A2.96 2.96 0 0 0 .13 9H5Zm11.066-9H9.829a2.98 2.98 0 0 0-2.122.879L7 1.584A.987.987 0 0 0 6.766 2h4.3A3.972 3.972 0 0 1 15 6v10h1.066A1.97 1.97 0 0 0 18 14V2a1.97 1.97 0 0 0-1.934-2Z"></path>
+              <path d="M11.066 4H7v5a2 2 0 0 1-2 2H0v7a1.969 1.969 0 0 0 1.933 2h9.133A1.97 1.97 0 0 0 13 18V6a1.97 1.97 0 0 0-1.934-2Z"></path>
+            </svg>
+          </button>
+        </div>
       </nav>
 
       <Outlet />
