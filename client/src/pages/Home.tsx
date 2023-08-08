@@ -4,10 +4,13 @@ import OverallTotals from "../components/OverallTotals";
 import YeeAndPepeTotal from "../components/YeeAndPepeTotal";
 import TodaysTotals from "../components/TodaysTotals";
 import LatestDonation from "../components/LatestDonation";
+import AnimatedRaffle from "../components/AnimatedRaffle";
+
 import React from "react";
 const Home = () => {
   return (
     <div id="Home">
+      <AnimatedRaffle/>
       <div className="horizontal-container">
         <h1 className="vertical-header">LATEST</h1>
         <LatestDonation />
@@ -28,6 +31,7 @@ const Home = () => {
           <TopDonations />
         </div>
       </div>
+      
     </div>
   );
 };

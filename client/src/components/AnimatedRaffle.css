@@ -1,0 +1,15 @@
+.holder{
+    min-height: 100vh;
+    width: 500px;
+}
+
+.spin-container{
+    position: relative;
+    width: 400px;
+    height:400px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 2mm ridge black;
+}
+
