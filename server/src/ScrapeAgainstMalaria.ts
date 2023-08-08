@@ -35,6 +35,8 @@ export async function scrapeSinglePage(): Promise<{
   };
 }
 export class DonationsScraper {
+  public static lastTotalDonations: number = 0;
+
   browser: Browser;
   page: Page;
   promises: Promise<any>[] = [];

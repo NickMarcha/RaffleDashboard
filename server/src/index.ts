@@ -9,8 +9,10 @@ import logger from "./logger";
 import APIEndPoint from "./APIEndpointFunctions";
 import { DonationsScraper, scrapeSinglePage } from "./ScrapeAgainstMalaria";
 import { Response } from "express";
-
+import http from "http";
+import { Server } from "socket.io";
 const app = express();
+
 const normalizePort = (val: string) => {
   const port = parseInt(val, 10);
 
@@ -22,7 +24,16 @@ const normalizePort = (val: string) => {
   }
   return false;
 };
-APIEndPoint.instantiate();
+
+const instantiateServer = async () => {
+  await APIEndPoint.instantiate();
+  logger.info("APIEndPoint Instantiated");
+  const totalResult = await APIEndPoint.fetchTotal();
+  logger.info("Total Donations: " + totalResult.donationCount);
+
+  DonationsScraper.lastTotalDonations = totalResult.donationCount;
+};
+instantiateServer();
 
 const port = normalizePort(process.env.PORT || "3001");
 app.set("port", port);
@@ -83,6 +94,18 @@ const scrapeJob = async () => {
     await APIEndPoint.updateLatest(data.donations, start, end, 3, false);
     await APIEndPoint.saveUpdated();
     await APIEndPoint.loadAllSheets();
+
+    while (DonationsScraper.lastTotalDonations < data.totalDonations) {
+      const index = Math.max(
+        data.totalDonations - DonationsScraper.lastTotalDonations,
+        0
+      ); // this will ignore donations before the latest 20
+
+      const donation = data.donations[data.donations.length - index];
+      io.emit("donations", donation);
+
+      DonationsScraper.lastTotalDonations++;
+    }
   } catch (error) {
     console.log("scrapeJob error");
     console.log(error);
@@ -130,6 +153,8 @@ const scrapeNPages = async (n: number) => {
 const job = schedule.scheduleJob("*/15 * * * *", scrapeJob);
 app.get("/api/ping", (req, response) => {
   response.send("pong");
+
+  io.emit("ping", "pong");
 });
 
 app.post("/api/login", limiter, async (request, response) => {
@@ -322,6 +347,8 @@ app.get("/api/rollRaffle", auth, async (req, response) => {
     logger.info("Fetched winner |" + new Date().toLocaleString());
     await APIEndPoint.saveUpdated();
     response.json(winnerData);
+
+    io.emit("raffle", winnerData);
   } catch (error) {
     handleErrorResponse(response, error);
   }
@@ -522,7 +549,16 @@ app.post("/api/rollRaffles", auth, async (req, response) => {
 app.use((req, response, next) => {
   response.status(404).send({ message: "404: endpoint not found" });
 });
-app.listen(port, () => {
+
+const server = http.createServer(app);
+const io = new Server(server, { path: "/api/socket.io" });
+io.on("connection", (socket) => {
+  socket.on("disconnect", () => {
+    console.log("user disconnected");
+  });
+  console.log("a user connected");
+});
+server.listen(port, () => {
   logger.info(`Now listening on port ${port}`);
 });
 
