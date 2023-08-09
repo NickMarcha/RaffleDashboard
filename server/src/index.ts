@@ -551,7 +551,7 @@ app.use((req, response, next) => {
 });
 
 const server = http.createServer(app);
-const io = new Server(server, { path: "/api/socket.io" });
+const io = new Server(server, { path: "/socket.io" });
 io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("user disconnected");
