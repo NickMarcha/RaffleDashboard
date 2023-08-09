@@ -550,6 +550,7 @@ app.post("/api/rollRaffles", auth, async (req, response) => {
  */
 app.post("/api/broadcast", auth, async (req, response) => {
   try {
+    logger.info("Broadcast requested by " + req.alias);
     io.emit("broadcast", req.body);
     response.status(200).send({
       message: "Broadcast message sent",
