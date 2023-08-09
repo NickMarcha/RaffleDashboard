@@ -110,6 +110,37 @@ function getAuthHeaderJSONPayload() {
   };
 }
 
+/**
+ * Placeholder for message object, requires a message property
+ */
+type MessageObject = {
+  message: string;
+  [key: string]: any; // Allow any other properties
+};
+
+/**
+ *  Broadcasts a message to server socket clients
+ * @param broadcastObject Placeholder for message object, requires a message property
+ * @returns true if broadcast was successful, false if not
+ */
+export async function broadcastMessage(
+  broadcastObject: MessageObject
+): Promise<boolean> {
+  try {
+    const response = await raffleClient.post("/broadcast", broadcastObject, {
+      headers: getAuthHeaderJSONPayload(),
+    });
+
+    if (response.data.error) {
+      throw new Error(response.data.error);
+    }
+    return true;
+  } catch (error) {
+    console.error("Error posting broadcast", error);
+    return false;
+  }
+}
+
 export async function removeFromRaffle(
   id: number | undefined,
   lazy: boolean = false

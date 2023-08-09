@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { rollRaffle, fetchOverallTotals, removeFromRaffle } from "../raffleApi";
+import {
+  rollRaffle,
+  fetchOverallTotals,
+  removeFromRaffle,
+  broadcastMessage,
+} from "../raffleApi";
 import "./RaffleRoll.css";
 import DonationPane from "./DonationPane";
 import { ProcessedDonation } from "../types/Donation";
@@ -43,6 +48,7 @@ const RaffleRoll = () => {
 
       setRaffling(false);
       setItem(result);
+      setHasSentResults(false);
       let totalResult = await fetchOverallTotals();
       console.log("totalResult");
 
@@ -52,10 +58,6 @@ const RaffleRoll = () => {
       } else {
         let suggestion =
           20 + (250 - 20) / Math.pow(1.01, totalResult.raffleDonationCount);
-        console.log("result.raffleDonationCount");
-        console.log(totalResult);
-        console.log("suggestion");
-        console.log(suggestion);
         setSuggestedSkipGoal(
           Math.max(result.amount + aFactor, Math.round(suggestion))
         );
@@ -63,6 +65,30 @@ const RaffleRoll = () => {
     }
 
     setRaffling(false);
+  };
+
+  const [hasSentResults, setHasSentResults] = useState(false);
+
+  const sendResults = async () => {
+    if (item === null) {
+      return;
+    }
+    setHasSentResults(true);
+    let emote = "WEOW";
+    switch (item.yeeOrPepe) {
+      case "YEE":
+        emote = "comfYEE";
+        break;
+      case "PEPE":
+        emote = "PepoComfy";
+        break;
+      default:
+        break;
+    }
+
+    const message = `Up next ${emote} , ${item.sponsor} won the raffle with a donation: ${item.message}}`;
+    const result = await broadcastMessage({ message: message });
+    console.log(`Sent Announcement: ${result}`);
   };
   const handleRemoveFromRaffle = async () => {
     setIsModalOpen(false);
@@ -97,6 +123,13 @@ const RaffleRoll = () => {
                     onClick={handleRemoveFromRaffle}
                   >
                     Remove From Raffle
+                  </button>
+                  <button
+                    disabled={hasSentResults}
+                    title="Sends results to DGG chat"
+                    onClick={sendResults}
+                  >
+                    Announce Winner
                   </button>
                 </div>
                 {FindYoutubeVideoIdFromParagraph(item.message) !== null && (

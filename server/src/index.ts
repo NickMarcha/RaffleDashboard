@@ -545,6 +545,20 @@ app.post("/api/rollRaffles", auth, async (req, response) => {
   }
 });
 
+/**
+ * Send broadcast message to all socket clients, clients expect {message: string}
+ */
+app.post("/api/broadcast", auth, async (req, response) => {
+  try {
+    io.emit("broadcast", req.body);
+    response.status(200).send({
+      message: "Broadcast message sent",
+    });
+  } catch (error) {
+    logger.error(error);
+  }
+});
+
 //404
 app.use((req, response, next) => {
   response.status(404).send({ message: "404: endpoint not found" });
