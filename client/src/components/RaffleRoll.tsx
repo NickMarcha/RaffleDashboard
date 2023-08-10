@@ -86,7 +86,7 @@ const RaffleRoll = () => {
         break;
     }
 
-    const message = `Up next ${emote} , ${item.sponsor} won the raffle with a donation: ${item.message}}`;
+    const message = `Up next ${emote} , ${item.sponsor} won the raffle with: ${item.message}}`;
     const result = await broadcastMessage({ message: message });
     console.log(`Sent Announcement: ${result}`);
   };
@@ -135,6 +135,7 @@ const RaffleRoll = () => {
                 {FindYoutubeVideoIdFromParagraph(item.message) !== null && (
                   <div className="flex-auto">
                     <iframe
+                      title="youtubeEmbed"
                       width="560"
                       height="315"
                       src={`https://www.youtube.com/embed/${FindYoutubeVideoIdFromParagraph(
