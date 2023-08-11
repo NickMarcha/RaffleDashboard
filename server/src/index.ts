@@ -153,6 +153,7 @@ const scrapeNPages = async (n: number) => {
 const job = schedule.scheduleJob("*/15 * * * *", scrapeJob);
 app.get("/api/ping", (req, response) => {
   response.send("pong");
+  logger.info("Ping");
 
   io.emit("ping", "pong");
 });
