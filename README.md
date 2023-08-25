@@ -19,7 +19,7 @@ Up to date export of Donation statistics found [here](https://docs.google.com/sp
 
 ## Configuration
 
-![Services](documentation\images\SetupDiagram.png)
+![Services](documentation/images/SetupDiagram.png)
 
 ### Inital setup
 
