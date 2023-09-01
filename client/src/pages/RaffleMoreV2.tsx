@@ -1,7 +1,12 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { ProcessedDonation } from "../types/Donation";
 import RaffleMoreCardV2 from "../components/RaffleMoreCardV2";
-import { removeFromRaffle, rollRaffleMore, saveUpdated } from "../raffleApi";
+import {
+  broadcastMessage,
+  removeFromRaffle,
+  rollRaffleMore,
+  saveUpdated,
+} from "../raffleApi";
 import useArray from "../hooks/useArray";
 import StrawPollAPI, { ResultEntry } from "../util/StrawPollAPI";
 import { RenderClickableMessage, sendToClip } from "../util/util";
@@ -10,7 +15,7 @@ import CountdownTimer from "../components/countdown/CountDownTimer";
 const RaffleMoreV2 = () => {
   const [pollID, setPollID] = React.useState<string>("");
   const [raffleAmount, setRaffleAmount] = React.useState(3);
-  const [deadline, setDeadline] = React.useState(90);
+  const [deadline, setDeadline] = React.useState(150);
   const [pollWinner, setPollWinner] = React.useState<ResultEntry | null>(null);
   const [removingEntries, setRemovingEntries] = React.useState<boolean>(false);
   const {
@@ -61,6 +66,7 @@ const RaffleMoreV2 = () => {
     //setPollButtonResultsEnabled(false);
     const newPollID = await StrawPollAPI.createPoll(deadline, donos);
     const newCountdownDate = new Date(Date.now() + deadline * 1000);
+    setHasSentResults(false);
 
     setCountDownDate(newCountdownDate);
     setPollID(newPollID);
@@ -81,7 +87,7 @@ const RaffleMoreV2 = () => {
     console.log(winner);
     setPollWinner(winner);
   }
-  /*
+  /*setHasSentResults
   async function handlePollResultsButton() {
     getPollResults();
   }*/
@@ -112,21 +118,70 @@ const RaffleMoreV2 = () => {
     setRemovingEntries(false);
   }
 
+  const [hasSentResults, setHasSentResults] = useState(false);
+
+  const sendResults = async () => {
+    if (pollWinner === null) {
+      return;
+    }
+
+    const item = donos.find((pd) => {
+      return pd.message === pollWinner.value;
+    });
+
+    if (item === null || item == undefined) {
+      return;
+    }
+
+    setHasSentResults(true);
+    let emote = "WEOW";
+    switch (item.yeeOrPepe) {
+      case "YEE":
+        emote = "comfYEE";
+        break;
+      case "PEPE":
+        emote = "PepoComfy";
+        break;
+      default:
+        const comfyEmotes = [
+          "ComfyAYA",
+          "ComfyCat",
+          "ComfyDan",
+          "ComfyDog",
+          "ComfyFerret",
+          "ComfyMel",
+          "coMMMMfy",
+        ];
+        emote = comfyEmotes[Math.floor(Math.random() * comfyEmotes.length)];
+        break;
+    }
+    const message = `Up next ${emote} ${item.sponsor} won the raffle with: ${item.message}`;
+    const result = await broadcastMessage({ message: message });
+    console.log(`Sent Announcement: ${result}`);
+  };
+
   return (
     <div className="m-10">
-      <div>
+      <div className="flex flex-row">
         <div
-          className="relative mb-3 text-black w-20"
+          className="relative mb-3 mr-3 text-black w-24"
           data-te-input-wrapper-init
         >
           <input
             type="number"
-            className="text peer block min-h-[auto] w-full rounded border-0 bg-transparent px-3 py-[0.32rem] leading-[1.6] outline-none transition-all duration-200 ease-linear focus:placeholder:opacity-100 peer-focus:text-primary data-[te-input-state-active]:placeholder:opacity-100 motion-reduce:transition-none dark:text-neutral-200 dark:placeholder:text-neutral-200 dark:peer-focus:text-primary [&:not([data-te-input-placeholder-active])]:placeholder:opacity-0 disabled:text-grey"
-            id="exampleFormControlInputNumber"
+            className="text peer block min-h-[auto] text-right w-full rounded border-0 bg-transparent px-3 py-[0.32rem] leading-[1.6] outline-none transition-all duration-200 ease-linear focus:placeholder:opacity-100 peer-focus:text-primary data-[te-input-state-active]:placeholder:opacity-100 motion-reduce:transition-none dark:text-neutral-200 dark:placeholder:text-neutral-200 dark:peer-focus:text-primary [&:not([data-te-input-placeholder-active])]:placeholder:opacity-0 disabled:text-grey"
+            id="countRaffle"
             value={raffleAmount}
             onChange={(e) => setRaffleAmount(parseInt(e.target.value))}
             disabled={false}
           />
+
+          <label
+            htmlFor="countRaffle"
+            className="pointer-events-none text-grey absolute left-3 top-0 mb-0 max-w-[90%] origin-[0_0] truncate pt-[0.37rem] leading-[1.6] text-neutral-500 transition-all duration-200 ease-out "
+          >
+            count
+          </label>
         </div>
         <div
           className="relative mb-3 text-black w-40"
@@ -189,6 +244,16 @@ const RaffleMoreV2 = () => {
                   <LoaderAnimation />
                 </div>
               )}
+            </button>
+            <button
+              disabled={
+                pollWinner === null ||
+                pollWinner === undefined ||
+                hasSentResults
+              }
+              onClick={sendResults}
+            >
+              Announce Winner
             </button>
             {raffling && <LoaderAnimation />}
           </div>
