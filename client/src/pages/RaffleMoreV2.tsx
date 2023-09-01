@@ -71,7 +71,7 @@ const RaffleMoreV2 = () => {
     getResultsTimer.current = setTimeout(() => {
       //setPollButtonResultsEnabled(true);
       getPollResults(newPollID);
-    }, 1000 * deadline + 5000);
+    }, 1000 * deadline + 10000);
   }
 
   async function getPollResults(fpollID: string = pollID) {
@@ -119,16 +119,14 @@ const RaffleMoreV2 = () => {
           className="relative mb-3 text-black w-20"
           data-te-input-wrapper-init
         >
-          {false && (
-            <input
-              type="number"
-              className="text peer block min-h-[auto] w-full rounded border-0 bg-transparent px-3 py-[0.32rem] leading-[1.6] outline-none transition-all duration-200 ease-linear focus:placeholder:opacity-100 peer-focus:text-primary data-[te-input-state-active]:placeholder:opacity-100 motion-reduce:transition-none dark:text-neutral-200 dark:placeholder:text-neutral-200 dark:peer-focus:text-primary [&:not([data-te-input-placeholder-active])]:placeholder:opacity-0 disabled:text-grey"
-              id="exampleFormControlInputNumber"
-              value={raffleAmount}
-              onChange={(e) => setRaffleAmount(parseInt(e.target.value))}
-              disabled={true}
-            />
-          )}
+          <input
+            type="number"
+            className="text peer block min-h-[auto] w-full rounded border-0 bg-transparent px-3 py-[0.32rem] leading-[1.6] outline-none transition-all duration-200 ease-linear focus:placeholder:opacity-100 peer-focus:text-primary data-[te-input-state-active]:placeholder:opacity-100 motion-reduce:transition-none dark:text-neutral-200 dark:placeholder:text-neutral-200 dark:peer-focus:text-primary [&:not([data-te-input-placeholder-active])]:placeholder:opacity-0 disabled:text-grey"
+            id="exampleFormControlInputNumber"
+            value={raffleAmount}
+            onChange={(e) => setRaffleAmount(parseInt(e.target.value))}
+            disabled={false}
+          />
         </div>
         <div
           className="relative mb-3 text-black w-40"
