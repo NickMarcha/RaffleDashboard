@@ -1,6 +1,8 @@
 import { CheerioAPI, load, Element, Cheerio } from "cheerio";
-import puppeteer, { Browser, ElementHandle, Page } from "puppeteer";
+import * as Puppeteer from "puppeteer";
+import  { Browser, ElementHandle, Page } from "puppeteer"
 import { Donation } from "./types/Donation";
+import logger from "./logger";
 
 /////////// CONSTANTS ///////////
 
@@ -74,12 +76,15 @@ export class DonationsScraper {
   static async createScraper(
     pagesToScrape?: number
   ): Promise<DonationsScraper> {
-    const browser = await puppeteer.launch({
+    logger.info("started loading Scraper")
+    const browser = await Puppeteer.launch({
       headless: "new",
       args: ["--no-sandbox"],
     });
+    logger.info("loaded Scraper")
     const page = await browser.newPage();
     await page.goto(scrapeURL);
+    logger.info("navigated to url")
     const htmlString = await page.content();
     const newRootCheerio = load(htmlString);
     const pageInfo = getPageInfo(newRootCheerio);
@@ -111,7 +116,7 @@ export class DonationsScraper {
 
     const currentPageInfo = getPageInfo(this.rootCheerio);
     const tableExists = this.rootCheerio(tableSelector).length > 0;
-    console.log(`Table exists: ${tableExists}`);
+    logger.info(`Table exists: ${tableExists}`);
 
     if (currentPageInfo.currentSponsorCountEnd >= this.scrapedDonations) {
       //not scraped current page
@@ -126,7 +131,7 @@ export class DonationsScraper {
       };
     } else {
       //Already scraped current page
-      console.log("Already scraped current page");
+      logger.info("Already scraped current page");
       return {
         donations: [],
         pageCount: this.pageCount,
@@ -153,7 +158,7 @@ export class DonationsScraper {
     const nextPageButton = this.rootCheerio("#" + nextPageSelector);
     //console.log(`Next page button exists: ${nextPageButton.length}`);
     if (nextPageButton.length === 0) {
-      console.log("No next page button");
+      logger.info("No next page button");
       return false;
     }
 
@@ -161,7 +166,7 @@ export class DonationsScraper {
       `[id="${nextPageSelector}"`
     );
     if (nextButtonElement === null) {
-      console.log("No next page button puppeteer");
+      logger.info("No next page button puppeteer");
       return false;
     }
     const anchor: ElementHandle<HTMLAnchorElement> =
@@ -242,7 +247,7 @@ function scrapeDonation(root: CheerioAPI, element: Element): Donation | null {
 
   switch (rowData.length) {
     case 13:
-      console.log("reoccurring donation in table");
+      logger.info("reoccurring donation in table");
       shift = 1; // if there is reoccurring donation in the table, the table will have an extra column, shift everything after that column by 1
       break;
     case 12:
@@ -302,7 +307,7 @@ function scrapeDonation(root: CheerioAPI, element: Element): Donation | null {
       }
       return parsed;
     } catch (e) {
-      console.log(e);
+      logger.error(e);
       return 0;
     }
   }
@@ -323,8 +328,8 @@ function scrapeDonation(root: CheerioAPI, element: Element): Donation | null {
       ?.split("-")[1];
     distributionFlag = data ? data : distributionFlag;
   } catch (e) {
-    console.log("Distribution flag error");
-    console.log(e);
+    logger.info("Distribution flag error");
+    logger.error(e);
   }
 
   let distributionStatus = "none";
@@ -336,8 +341,8 @@ function scrapeDonation(root: CheerioAPI, element: Element): Donation | null {
       distributionStatus = title;
     }
   } catch (e) {
-    console.log("Distribution status error");
-    console.log(e);
+    logger.info("Distribution status error");
+    logger.error(e);
   }
 
   const numberOfNetsFunded = parseInt(sortedData[10 + shift].text());

@@ -18,15 +18,22 @@ const TodaysTotals = () => {
     };
   }, []);
 
+  if(data === undefined){
+    return(<div>
+      <h2>Todays Totals</h2>
+      Failed To load
+    </div>)
+  }
+
   return (
     <div>
       <h2>Todays Totals</h2>
       <ul>
-        <strong>Yee Total:</strong> ${Math.round(data.yeeTotal)}
+        <strong>Yee Total:</strong> ${Math.round(data?.yeeTotal)}
         <br />
-        <strong>Pepe Total:</strong> ${Math.round(data.pepeTotal)}
+        <strong>Pepe Total:</strong> ${Math.round(data?.pepeTotal)}
         <br />
-        <strong>Total:</strong> ${Math.round(data.total)}
+        <strong>Total:</strong> ${Math.round(data?.total)}
       </ul>
     </div>
   );
