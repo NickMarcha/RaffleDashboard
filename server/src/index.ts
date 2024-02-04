@@ -123,13 +123,13 @@ const scrapeNPages = async (n: number) => {
     const totalDonations = ds.totalDonations;
     do {
       let donationBatch = await ds.donationBatch();
-      console.log("Fetched Data")
+      logger.info("Fetched Data")
       if (typeof donationBatch === "undefined") {
-        console.log("No data");
+        logger.info("No data");
         return;
       }
       try {
-        console.log("Updating Latest Data")
+        logger.info("Updating Latest Data")
         await APIEndPoint.updateLatest(
           donationBatch.donations,
           totalDonations - donationBatch.endSponsorCount,

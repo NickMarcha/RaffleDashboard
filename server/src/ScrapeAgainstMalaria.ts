@@ -1,5 +1,5 @@
 import { CheerioAPI, load, Element, Cheerio } from "cheerio";
-import * as Puppeteer from "puppeteer";
+import puppeteer, * as Puppeteer from "puppeteer";
 import  { Browser, ElementHandle, Page } from "puppeteer"
 import { Donation } from "./types/Donation";
 import logger from "./logger";
@@ -77,6 +77,9 @@ export class DonationsScraper {
     pagesToScrape?: number
   ): Promise<DonationsScraper> {
     logger.info("started loading Scraper")
+    if(puppeteer === undefined){
+      throw Error("puppeteer not loaded")
+    }
     const browser = await Puppeteer.launch({
       headless: "new",
       args: ["--no-sandbox"],

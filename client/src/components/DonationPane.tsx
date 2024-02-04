@@ -35,6 +35,7 @@ const DonationPane: React.FC<{ donation: ProcessedDonation | null }> = ({
               <span className="flex">
                 <img
                   className="h-4 w-5"
+                  alt="location flag"
                   title={`${donation.flag} - ${donation.location}`}
                   src={getFlagUrl(donation.flag)}
                 ></img>{" "}

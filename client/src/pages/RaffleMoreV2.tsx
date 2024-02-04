@@ -129,7 +129,7 @@ const RaffleMoreV2 = () => {
       return pd.message === pollWinner.value;
     });
 
-    if (item === null || item == undefined) {
+    if (item === null || item === undefined) {
       return;
     }
 

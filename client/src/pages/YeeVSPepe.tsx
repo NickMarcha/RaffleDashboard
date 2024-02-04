@@ -75,7 +75,7 @@ const YeeVSPepe = () => {
 const StatsColumn: React.FC<{
   list: Map<string, { sum: number; count: number }>;
   header?: React.ReactNode;
-}> = ({ list, header: header }) => {
+}> = ({ list, header }) => {
   return (
     <div className="flex-1 ml-2 mr-2">
       {header}
