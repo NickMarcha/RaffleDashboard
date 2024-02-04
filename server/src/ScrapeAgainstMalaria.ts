@@ -1,6 +1,6 @@
 import { CheerioAPI, load, Element, Cheerio } from "cheerio";
-import puppeteer, * as Puppeteer from "puppeteer";
-import  { Browser, ElementHandle, Page } from "puppeteer"
+import Puppeteer from "puppeteer";
+import { Browser, ElementHandle, Page } from "puppeteer";
 import { Donation } from "./types/Donation";
 import logger from "./logger";
 
@@ -76,18 +76,18 @@ export class DonationsScraper {
   static async createScraper(
     pagesToScrape?: number
   ): Promise<DonationsScraper> {
-    logger.info("started loading Scraper")
-    if(puppeteer === undefined){
-      throw Error("puppeteer not loaded")
+    logger.info("started loading Scraper");
+    if (Puppeteer === undefined) {
+      throw Error("puppeteer not loaded");
     }
     const browser = await Puppeteer.launch({
       headless: "new",
       args: ["--no-sandbox"],
     });
-    logger.info("loaded Scraper")
+    logger.info("loaded Scraper");
     const page = await browser.newPage();
     await page.goto(scrapeURL);
-    logger.info("navigated to url")
+    logger.info("navigated to url");
     const htmlString = await page.content();
     const newRootCheerio = load(htmlString);
     const pageInfo = getPageInfo(newRootCheerio);
